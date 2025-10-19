@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36518.9 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API_NoSQL", "API_NoSQL\API_NoSQL.csproj", "{DCC721F8-7CF9-4EFE-9F49-7DD071001850}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DCC721F8-7CF9-4EFE-9F49-7DD071001850}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCC721F8-7CF9-4EFE-9F49-7DD071001850}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCC721F8-7CF9-4EFE-9F49-7DD071001850}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCC721F8-7CF9-4EFE-9F49-7DD071001850}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {94A96A18-6396-4983-BB14-77749C1ED83B}
+	EndGlobalSection
+EndGlobal
