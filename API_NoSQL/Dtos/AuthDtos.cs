@@ -1,8 +1,7 @@
-namespace API_NoSQL.Dtos
+﻿namespace API_NoSQL.Dtos
 {
     public record LoginDto(string Username, string Password);
 
-    // NEW: registration payload
     public record RegisterDto(
         string FullName,
         string Phone,
@@ -10,4 +9,10 @@ namespace API_NoSQL.Dtos
         string Address,
         string Username,
         string Password);
+
+    // NEW: đổi mật khẩu
+    public record ChangePasswordDto(
+        string Username,
+        string OldPassword,
+        string NewPassword);
 }

@@ -1,4 +1,4 @@
-using API_NoSQL.Models;
+﻿using API_NoSQL.Models;
 using BCrypt.Net;
 using MongoDB.Driver;
 
@@ -39,5 +39,21 @@ namespace API_NoSQL.Services
 
         public bool VerifyPassword(Customer c, string password) =>
             BCrypt.Net.BCrypt.Verify(password, c.Account.PasswordHash);
+
+        // NEW: đổi mật khẩu theo username
+        public async Task<(bool Ok, string? Error)> ChangePasswordAsync(string username, string oldPassword, string newPassword)
+        {
+            var c = await GetByUsernameAsync(username);
+            if (c is null) return (false, "User not found");
+            if (!VerifyPassword(c, oldPassword)) return (false, "Invalid current password");
+            if (string.Equals(oldPassword, newPassword, StringComparison.Ordinal))
+                return (false, "New password must be different");
+
+            var newHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            var update = Builders<Customer>.Update.Set(x => x.Account.PasswordHash, newHash);
+
+            var res = await _ctx.Customers.UpdateOneAsync(x => x.Id == c.Id, update);
+            return res.ModifiedCount == 1 ? (true, null) : (false, "Password update failed");
+        }
     }
 }

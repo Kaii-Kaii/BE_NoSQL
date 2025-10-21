@@ -1,4 +1,4 @@
-using API_NoSQL.Dtos;
+﻿using API_NoSQL.Dtos;
 using API_NoSQL.Models;
 using API_NoSQL.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -32,7 +32,6 @@ namespace API_NoSQL.Controllers
             });
         }
 
-        // NEW: self-register
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
@@ -65,6 +64,25 @@ namespace API_NoSQL.Controllers
                 controllerName: "Customers",
                 routeValues: new { code = c.Code },
                 value: new { c.Code, c.FullName, c.Account.Username, c.Account.Role });
+        }
+
+        // NEW: đổi mật khẩu
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Username) ||
+                string.IsNullOrWhiteSpace(dto.OldPassword) ||
+                string.IsNullOrWhiteSpace(dto.NewPassword))
+                return BadRequest(new { error = "Invalid payload" });
+
+            var (ok, error) = await _customers.ChangePasswordAsync(dto.Username, dto.OldPassword, dto.NewPassword);
+            if (!ok)
+            {
+                if (error == "User not found") return NotFound(new { error });
+                return BadRequest(new { error });
+            }
+
+            return NoContent();
         }
     }
 }
