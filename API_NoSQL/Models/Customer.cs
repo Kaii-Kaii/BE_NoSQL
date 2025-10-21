@@ -24,6 +24,11 @@ namespace API_NoSQL.Models
         [BsonElement("diachi")]
         public string Address { get; set; } = default!;
 
+        // NEW: Avatar URL, nullable. Not stored until uploaded.
+        [BsonElement("avatar")]
+        [BsonIgnoreIfNull]
+        public string? Avatar { get; set; }
+
         [BsonElement("taikhoan")]
         public Account Account { get; set; } = new();
 

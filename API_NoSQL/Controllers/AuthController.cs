@@ -28,7 +28,8 @@ namespace API_NoSQL.Controllers
                 customer!.Code,
                 customer.FullName,
                 customer.Account.Username,
-                customer.Account.Role
+                customer.Account.Role,
+                customer.Avatar
             });
         }
 
@@ -48,6 +49,7 @@ namespace API_NoSQL.Controllers
                 Phone = dto.Phone,
                 Email = dto.Email,
                 Address = dto.Address,
+                Avatar = null,
                 Account = new Account
                 {
                     Username = dto.Username,
@@ -63,7 +65,7 @@ namespace API_NoSQL.Controllers
                 actionName: "GetByCode",
                 controllerName: "Customers",
                 routeValues: new { code = c.Code },
-                value: new { c.Code, c.FullName, c.Account.Username, c.Account.Role });
+                value: new { c.Code, c.FullName, c.Account.Username, c.Account.Role, c.Avatar });
         }
 
         // NEW: đổi mật khẩu

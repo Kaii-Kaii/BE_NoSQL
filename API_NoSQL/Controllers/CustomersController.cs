@@ -10,8 +10,13 @@ namespace API_NoSQL.Controllers
     public class CustomersController : ControllerBase
     {
         private readonly CustomerService _service;
+        private readonly CloudinaryService _cloudinary;
 
-        public CustomersController(CustomerService service) => _service = service;
+        public CustomersController(CustomerService service, CloudinaryService cloudinary)
+        {
+            _service = service;
+            _cloudinary = cloudinary;
+        }
 
         [HttpGet("{code}")]
         public async Task<ActionResult<Customer>> GetByCode(string code)
@@ -38,6 +43,7 @@ namespace API_NoSQL.Controllers
                 Phone = dto.Phone,
                 Email = dto.Email,
                 Address = dto.Address,
+                Avatar = null,
                 Account = new Account
                 {
                     Username = dto.Username,
@@ -52,17 +58,33 @@ namespace API_NoSQL.Controllers
         }
 
         [HttpPut("{code}")]
-        public async Task<IActionResult> Update(string code, [FromBody] CustomerUpdateDto dto)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Update(string code, [FromForm] CustomerUpdateDto dto)
         {
-            var ok = await _service.UpdateAsync(code, c =>
+            // Basic field updates; ignore empty strings from Swagger
+            var updated = await _service.UpdateAsync(code, c =>
             {
-                if (dto.FullName is not null) c.FullName = dto.FullName;
-                if (dto.Phone is not null) c.Phone = dto.Phone;
-                if (dto.Email is not null) c.Email = dto.Email;
-                if (dto.Address is not null) c.Address = dto.Address;
+                if (!string.IsNullOrWhiteSpace(dto.FullName)) c.FullName = dto.FullName!;
+                if (!string.IsNullOrWhiteSpace(dto.Phone)) c.Phone = dto.Phone!;
+                if (!string.IsNullOrWhiteSpace(dto.Email)) c.Email = dto.Email!;
+                if (!string.IsNullOrWhiteSpace(dto.Address)) c.Address = dto.Address!;
             });
 
-            return ok ? NoContent() : NotFound();
+            if (!updated) return NotFound();
+
+            // Avatar handling
+            if (dto.Avatar is not null && dto.Avatar.Length > 0)
+            {
+                var url = await _cloudinary.UploadImageAsync(dto.Avatar);
+                await _service.SetAvatarUrlByCodeAsync(code, url);
+            }
+            else if (dto.RemoveAvatar == true)
+            {
+                await _service.RemoveAvatarByCodeAsync(code);
+            }
+
+            return NoContent();
         }
 
         [HttpDelete("{code}")]
@@ -70,6 +92,22 @@ namespace API_NoSQL.Controllers
         {
             var ok = await _service.DeleteAsync(code);
             return ok ? NoContent() : NotFound();
+        }
+
+        // NEW: Upload avatar and save URL (still available if you need a dedicated endpoint)
+        [HttpPost("{code}/avatar")]
+        public async Task<IActionResult> UploadAvatar(string code, IFormFile file)
+        {
+            if (file is null) return BadRequest(new { error = "Missing file" });
+
+            var customer = await _service.GetByCodeAsync(code);
+            if (customer is null) return NotFound(new { error = "Customer not found" });
+
+            var url = await _cloudinary.UploadImageAsync(file);
+            var ok = await _service.SetAvatarUrlByCodeAsync(code, url);
+            if (!ok) return StatusCode(500, new { error = "Failed to save avatar" });
+
+            return Ok(new { avatar = url });
         }
     }
 }
