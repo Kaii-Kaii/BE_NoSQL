@@ -2,7 +2,6 @@ using API_NoSQL.Settings;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
 
 namespace API_NoSQL.Services
 {
@@ -11,9 +10,9 @@ namespace API_NoSQL.Services
         private readonly Cloudinary _cloudinary;
         private readonly CloudinarySettings _settings;
 
-        public CloudinaryService(IOptions<CloudinarySettings> options)
+        public CloudinaryService(CloudinarySettings settings)
         {
-            _settings = options.Value;
+            _settings = settings;
             var account = new Account(_settings.CloudName, _settings.ApiKey, _settings.ApiSecret);
             _cloudinary = new Cloudinary(account)
             {
@@ -23,10 +22,11 @@ namespace API_NoSQL.Services
 
         public async Task<string> UploadImageAsync(IFormFile file, string? folder = null)
         {
-            if (file is null || file.Length == 0)
+            if (file == null || file.Length == 0)
                 throw new ArgumentException("Empty file", nameof(file));
 
             await using var stream = file.OpenReadStream();
+
             var uploadParams = new ImageUploadParams
             {
                 File = new FileDescription(file.FileName, stream),
@@ -38,9 +38,12 @@ namespace API_NoSQL.Services
             };
 
             var result = await _cloudinary.UploadAsync(uploadParams);
-            if (result.StatusCode is System.Net.HttpStatusCode.OK or System.Net.HttpStatusCode.Created)
+
+            if (result.StatusCode == System.Net.HttpStatusCode.OK || result.StatusCode == System.Net.HttpStatusCode.Created)
             {
-                return result.SecureUrl?.ToString() ?? result.Url?.ToString() ?? throw new InvalidOperationException("Upload returned no URL");
+                return result.SecureUrl?.ToString()
+                       ?? result.Url?.ToString()
+                       ?? throw new InvalidOperationException("Upload returned no URL");
             }
 
             throw new InvalidOperationException($"Upload failed: {result.Error?.Message}");
