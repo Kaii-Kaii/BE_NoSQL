@@ -125,11 +125,11 @@ namespace API_NoSQL.Services
             return (items, total);
         }
 
-        // NEW: Admin updates order status to "?ang giao"
+        // NEW: Admin updates order status
         public async Task<bool> UpdateOrderStatusAsync(string customerCode, string orderCode, string newStatus)
         {
-            // Validate status transition
-            var validStatuses = new[] { "?ã ??t hàng", "?ang giao", "Hoàn thành" };
+            // Accept only normalized statuses without accents
+            var validStatuses = new[] { "DaDatHang", "DangGiao", "HoanThanh" };
             if (!validStatuses.Contains(newStatus))
                 return false;
 
@@ -143,7 +143,7 @@ namespace API_NoSQL.Services
             return await _customers.UpdateAsync(customerCode, c => c.Orders = customer.Orders);
         }
 
-        // NEW: Customer confirms order received -> "Hoàn thành"
+        // NEW: Customer confirms order received -> "HoanThanh"
         public async Task<bool> ConfirmOrderReceivedAsync(string customerCode, string orderCode)
         {
             var customer = await _customers.GetByCodeAsync(customerCode);
@@ -152,11 +152,11 @@ namespace API_NoSQL.Services
             var order = customer.Orders.FirstOrDefault(o => o.Code == orderCode);
             if (order is null) return false;
 
-            // Only allow confirmation if status is "?ang giao"
-            if (order.Status != "?ang giao")
+            // Only allow confirmation if status is "DangGiao"
+            if (order.Status != "DangGiao")
                 return false;
 
-            order.Status = "Hoàn thành";
+            order.Status = "HoanThanh";
             return await _customers.UpdateAsync(customerCode, c => c.Orders = customer.Orders);
         }
     }

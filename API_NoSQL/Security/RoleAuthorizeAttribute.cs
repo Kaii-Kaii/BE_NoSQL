@@ -16,7 +16,8 @@ namespace API_NoSQL.Security
             var role = context.HttpContext.Request.Headers["X-Role"].ToString();
             if (!string.Equals(role, _requiredRole, StringComparison.OrdinalIgnoreCase))
             {
-                context.Result = new ForbidResult();
+                // Return 403 directly to avoid requiring ASP.NET authentication schemes
+                context.Result = new StatusCodeResult(StatusCodes.Status403Forbidden);
                 return;
             }
 
