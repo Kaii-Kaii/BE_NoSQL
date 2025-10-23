@@ -24,5 +24,19 @@ namespace API_NoSQL.Controllers
             var (items, total) = await _orders.GetAllOrdersAsync(page, pageSize);
             return Ok(new { total, page, pageSize, items });
         }
+
+        // PUT /api/Admin/orders/{customerCode}/{orderCode}/status
+        [HttpPut("orders/{customerCode}/{orderCode}/status")]
+        public async Task<IActionResult> UpdateOrderStatus(string customerCode, string orderCode, [FromBody] UpdateOrderStatusDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Status))
+                return BadRequest(new { error = "Status is required" });
+
+            var ok = await _orders.UpdateOrderStatusAsync(customerCode, orderCode, dto.Status);
+            if (!ok)
+                return BadRequest(new { error = "Failed to update order status. Check customer code, order code, and valid status." });
+
+            return NoContent();
+        }
     }
 }

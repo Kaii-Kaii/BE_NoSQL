@@ -20,11 +20,30 @@ namespace API_NoSQL.Services
         private static string NewOrderCode() =>
             $"HD{DateTime.UtcNow:yyyyMMddHHmmssfff}";
 
+        // NEW: Normalize payment method (remove accents)
+        private static string NormalizePaymentMethod(string method)
+        {
+            return method?.ToLower().Trim() switch
+            {
+                "tien mat" => "TienMat",
+                "tienmat" => "TienMat",
+                "chuyen khoan" => "ChuyenKhoan",
+                "chuyenkhoan" => "ChuyenKhoan",
+                _ => method
+            };
+        }
+
         public async Task<(bool Ok, string? Error, string? OrderCode)> CreateAsync(CreateOrderDto req)
         {
             var customer = await _customers.GetByCodeAsync(req.CustomerCode);
             if (customer is null) return (false, "Customer not found", null);
             if (req.Items is null || req.Items.Count == 0) return (false, "Order has no items", null);
+
+            // Normalize and validate payment method
+            var normalizedPaymentMethod = NormalizePaymentMethod(req.PaymentMethod);
+            var validPaymentMethods = new[] { "TienMat", "ChuyenKhoan" };
+            if (!validPaymentMethods.Contains(normalizedPaymentMethod))
+                return (false, "Invalid payment method. Use 'TienMat' or 'ChuyenKhoan'", null);
 
             var items = new List<OrderItem>();
             var total = 0;
@@ -58,7 +77,8 @@ namespace API_NoSQL.Services
                 Code = NewOrderCode(),
                 CreatedAt = DateTime.UtcNow,
                 Total = total,
-                Status = "Chua thanh toan",
+                Status = "DaDatHang",
+                PaymentMethod = normalizedPaymentMethod,
                 Items = items
             };
 
@@ -96,13 +116,48 @@ namespace API_NoSQL.Services
             var flat = customers
                 .SelectMany(c => (c.Orders ?? new List<Order>())
                     .Select(o => new AdminOrderListItemDto(
-                        o.Code, c.Code, c.FullName, o.CreatedAt, o.Total, o.Status)))
+                        o.Code, c.Code, c.FullName, o.CreatedAt, o.Total, o.Status, o.PaymentMethod)))
                 .OrderByDescending(o => o.CreatedAt)
                 .ToList();
 
             var total = flat.Count;
             var items = flat.Skip((page - 1) * pageSize).Take(pageSize).ToList();
             return (items, total);
+        }
+
+        // NEW: Admin updates order status to "?ang giao"
+        public async Task<bool> UpdateOrderStatusAsync(string customerCode, string orderCode, string newStatus)
+        {
+            // Validate status transition
+            var validStatuses = new[] { "?ã ??t hàng", "?ang giao", "Hoàn thành" };
+            if (!validStatuses.Contains(newStatus))
+                return false;
+
+            var customer = await _customers.GetByCodeAsync(customerCode);
+            if (customer is null) return false;
+
+            var order = customer.Orders.FirstOrDefault(o => o.Code == orderCode);
+            if (order is null) return false;
+
+            order.Status = newStatus;
+            return await _customers.UpdateAsync(customerCode, c => c.Orders = customer.Orders);
+        }
+
+        // NEW: Customer confirms order received -> "Hoàn thành"
+        public async Task<bool> ConfirmOrderReceivedAsync(string customerCode, string orderCode)
+        {
+            var customer = await _customers.GetByCodeAsync(customerCode);
+            if (customer is null) return false;
+
+            var order = customer.Orders.FirstOrDefault(o => o.Code == orderCode);
+            if (order is null) return false;
+
+            // Only allow confirmation if status is "?ang giao"
+            if (order.Status != "?ang giao")
+                return false;
+
+            order.Status = "Hoàn thành";
+            return await _customers.UpdateAsync(customerCode, c => c.Orders = customer.Orders);
         }
     }
 }

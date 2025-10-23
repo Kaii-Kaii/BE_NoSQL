@@ -59,8 +59,14 @@ namespace API_NoSQL.Models
         [BsonElement("tongtien")]
         public int Total { get; set; }
 
+        // NEW: Order status workflow
+        // "Ðã d?t hàng" -> "Ðang giao" -> "Hoàn thành"
         [BsonElement("trangthai")]
-        public string Status { get; set; } = "?ã thanh toán";
+        public string Status { get; set; } = "Ðã d?t hàng";
+
+        // NEW: Payment method - "Ti?n m?t" or "Chuy?n kho?n"
+        [BsonElement("hinhthucthanhtoan")]
+        public string PaymentMethod { get; set; } = "Ti?n m?t";
 
         [BsonElement("chitiet")]
         public List<OrderItem> Items { get; set; } = [];

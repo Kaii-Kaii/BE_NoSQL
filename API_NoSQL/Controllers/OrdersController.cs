@@ -33,5 +33,14 @@ namespace API_NoSQL.Controllers
             var o = await _orders.GetOrderByCodeAsync(orderCode);
             return o is null ? NotFound() : Ok(o);
         }
+
+        // NEW: Customer confirms order received -> "Hoàn thành"
+        [HttpPut("{customerCode}/orders/{orderCode}/confirm")]
+        public async Task<IActionResult> ConfirmReceived(string customerCode, string orderCode)
+        {
+            var ok = await _orders.ConfirmOrderReceivedAsync(customerCode, orderCode);
+            if (!ok) return BadRequest(new { error = "Cannot confirm order. Either not found, already completed, or not in delivery status." });
+            return NoContent();
+        }
     }
 }

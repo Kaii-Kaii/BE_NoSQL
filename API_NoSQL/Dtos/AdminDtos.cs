@@ -6,5 +6,6 @@ namespace API_NoSQL.Dtos
         string CustomerName,
         DateTime CreatedAt,
         int Total,
-        string Status);
+        string Status,
+        string PaymentMethod);
 }
