@@ -84,6 +84,15 @@ namespace API_NoSQL.Services
             return res.ModifiedCount == 1;
         }
 
+        // NEW: increase stock (import inventory)
+        public async Task<bool> IncreaseStockAsync(string code, int qty)
+        {
+            if (qty <= 0) return false;
+            var update = Builders<Book>.Update.Inc(b => b.InStock, qty);
+            var res = await _ctx.Books.UpdateOneAsync(b => b.Code == code, update);
+            return res.ModifiedCount == 1;
+        }
+
         // NEW: get all books (no paging/filter)
         public Task<List<Book>> GetAllAsync() =>
             _ctx.Books.Find(Builders<Book>.Filter.Empty).ToListAsync();
