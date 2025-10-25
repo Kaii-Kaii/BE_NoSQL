@@ -29,5 +29,25 @@ namespace API_NoSQL.Controllers
             var total = await _stats.GetRevenueAsync(y, month);
             return Ok(new { year = y, month, total });
         }
+
+        // GET /api/Stats/revenue/daily?year=2025&month=10
+        [HttpGet("revenue/daily")]
+        public async Task<IActionResult> RevenueDaily([FromQuery] int? year, [FromQuery] int month)
+        {
+            if (month is < 1 or > 12) return BadRequest(new { error = "Invalid month" });
+            var y = year ?? DateTime.UtcNow.Year;
+            var data = await _stats.GetDailyRevenueAsync(y, month);
+            return Ok(new { year = y, month, points = data.Select(d => new { day = d.Day, total = d.Total }) });
+        }
+
+        // GET /api/Stats/books-sold/daily?year=2025&month=10
+        [HttpGet("books-sold/daily")]
+        public async Task<IActionResult> BooksSoldDaily([FromQuery] int? year, [FromQuery] int month)
+        {
+            if (month is < 1 or > 12) return BadRequest(new { error = "Invalid month" });
+            var y = year ?? DateTime.UtcNow.Year;
+            var data = await _stats.GetDailyBooksSoldAsync(y, month);
+            return Ok(new { year = y, month, points = data.Select(d => new { day = d.Day, quantity = d.Quantity }) });
+        }
     }
 }

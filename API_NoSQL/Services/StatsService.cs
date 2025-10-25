@@ -34,5 +34,60 @@ namespace API_NoSQL.Services
 
             return total;
         }
+
+        // NEW: daily revenue for a month
+        public async Task<List<(int Day, int Total)>> GetDailyRevenueAsync(int year, int month)
+        {
+            var start = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var end = start.AddMonths(1);
+            var days = DateTime.DaysInMonth(year, month);
+            var totals = Enumerable.Repeat(0, days).ToArray();
+
+            var customers = await _ctx.Customers
+                .Find(Builders<Customer>.Filter.Empty)
+                .Project(c => new { c.Orders })
+                .ToListAsync();
+
+            foreach (var o in customers.SelectMany(c => c.Orders ?? new List<Order>()))
+            {
+                if (o.CreatedAt >= start && o.CreatedAt < end)
+                {
+                    var d = o.CreatedAt.ToLocalTime().Day; // 1..days
+                    totals[d - 1] += o.Total;
+                }
+            }
+
+            var result = new List<(int Day, int Total)>();
+            for (int d = 1; d <= days; d++) result.Add((d, totals[d - 1]));
+            return result;
+        }
+
+        // NEW: daily sold quantity for a month
+        public async Task<List<(int Day, int Quantity)>> GetDailyBooksSoldAsync(int year, int month)
+        {
+            var start = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var end = start.AddMonths(1);
+            var days = DateTime.DaysInMonth(year, month);
+            var totals = Enumerable.Repeat(0, days).ToArray();
+
+            var customers = await _ctx.Customers
+                .Find(Builders<Customer>.Filter.Empty)
+                .Project(c => new { c.Orders })
+                .ToListAsync();
+
+            foreach (var o in customers.SelectMany(c => c.Orders ?? new List<Order>()))
+            {
+                if (o.CreatedAt >= start && o.CreatedAt < end)
+                {
+                    var qty = o.Items?.Sum(i => i.Quantity) ?? 0;
+                    var d = o.CreatedAt.ToLocalTime().Day;
+                    totals[d - 1] += qty;
+                }
+            }
+
+            var result = new List<(int Day, int Quantity)>();
+            for (int d = 1; d <= days; d++) result.Add((d, totals[d - 1]));
+            return result;
+        }
     }
 }
