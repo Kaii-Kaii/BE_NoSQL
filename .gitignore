@@ -5,6 +5,8 @@
 *.sln.docstates
 
 .env
+firebase_config.json
+
 
 # Build results
 [Dd]ebug/

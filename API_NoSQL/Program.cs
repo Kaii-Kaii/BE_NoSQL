@@ -2,6 +2,8 @@
 using API_NoSQL.Settings;
 using DotNetEnv;
 using System.Text.Json.Serialization;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +29,7 @@ builder.Services.AddScoped<CustomerService>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<StatsService>();
+builder.Services.AddScoped<GoogleAuthService>();
 
 // NEW: Configure JSON serialization to preserve Unicode characters (Vietnamese diacritics)
 builder.Services.AddControllers()
