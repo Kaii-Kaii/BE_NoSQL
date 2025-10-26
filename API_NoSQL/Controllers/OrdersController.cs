@@ -42,5 +42,7 @@ namespace API_NoSQL.Controllers
             if (!ok) return BadRequest(new { error = "Cannot confirm order. Either not found, already completed, or not in delivery status." });
             return NoContent();
         }
+
+        
     }
 }
