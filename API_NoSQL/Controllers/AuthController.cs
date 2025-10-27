@@ -28,7 +28,7 @@ namespace API_NoSQL.Controllers
                 customer.Email,
                 customer.Account.Username,
                 customer.Account.Role,
-                customer.Account.Status, // ← Trả về trạng thái
+                customer.Account.Status,
                 customer.Avatar
             });
         }
@@ -51,7 +51,7 @@ namespace API_NoSQL.Controllers
                     customer.Email,
                     customer.Account.Username,
                     customer.Account.Role,
-                    customer.Account.Status, // ← Trả về trạng thái
+                    customer.Account.Status,
                     customer.Avatar,
                     message = "Registration successful. Please check your email to verify your account."
                 });
@@ -77,14 +77,19 @@ namespace API_NoSQL.Controllers
             return Ok(new { message = "Verification email sent. Please check your inbox." });
         }
 
-        // Start email change process (sends verification to new email)
-        [HttpPost("change-email")]
-        public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailRequestDto dto)
+        // Change password for logged-in user
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
         {
-            var (ok, error) = await _firebaseAuth.StartChangeEmailAsync(dto.CustomerCode, dto.IdToken, dto.NewEmail);
+            if (dto.CurrentPassword == dto.NewPassword)
+            {
+                return BadRequest(new { error = "New password must be different from current password" });
+            }
+
+            var (ok, error) = await _firebaseAuth.ChangePasswordAsync(dto);
             if (!ok) return BadRequest(new { error });
             
-            return Ok(new { message = "Email changed. Please verify and login with new email." });
+            return Ok(new { message = "Password changed successfully. Please login again with new password." });
         }
     }
 }

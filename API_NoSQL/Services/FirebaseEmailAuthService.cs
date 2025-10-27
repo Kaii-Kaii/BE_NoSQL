@@ -336,5 +336,70 @@ namespace API_NoSQL.Services
                 return (false, ex.Message);
             }
         }
+
+        /// <summary>
+        /// Change password for logged-in user
+        /// Updates both Firebase and MongoDB
+        /// </summary>
+        public async Task<(bool Ok, string? Error)> ChangePasswordAsync(ChangePasswordDto dto)
+        {
+            try
+            {
+                // 1) Verify current password
+                var signInPayload = new
+                {
+                    email = dto.Email,
+                    password = dto.CurrentPassword,
+                    returnSecureToken = true
+                };
+
+                var signInResp = await _http.PostAsJsonAsync(Endpoint("accounts:signInWithPassword"), signInPayload, JsonOptions);
+                if (!signInResp.IsSuccessStatusCode)
+                {
+                    return (false, "Current password is incorrect");
+                }
+
+                var signInJson = await signInResp.Content.ReadFromJsonAsync<JsonElement>();
+                var idToken = signInJson.GetProperty("idToken").GetString();
+                if (string.IsNullOrWhiteSpace(idToken))
+                    return (false, "Failed to verify current password");
+
+                // 2) Change password on Firebase
+                var changePasswordPayload = new
+                {
+                    idToken = idToken,
+                    password = dto.NewPassword,
+                    returnSecureToken = true
+                };
+
+                var changeResp = await _http.PostAsJsonAsync(Endpoint("accounts:update"), changePasswordPayload, JsonOptions);
+                if (!changeResp.IsSuccessStatusCode)
+                {
+                    var changeJson = await changeResp.Content.ReadFromJsonAsync<JsonElement>();
+                    var err = changeJson.TryGetProperty("error", out var e) 
+                        && e.TryGetProperty("message", out var msg)
+                        ? msg.GetString() 
+                        : "Failed to change password";
+                    return (false, err);
+                }
+
+                // 3) Update MongoDB
+                var user = await _customers.GetByUsernameAsync(dto.Email);
+                if (user != null)
+                {
+                    var newHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+                    await _customers.UpdateAsync(user.Code, c =>
+                    {
+                        c.Account.PasswordHash = newHash;
+                    });
+                }
+
+                return (true, null);
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
+        }
     }
 }

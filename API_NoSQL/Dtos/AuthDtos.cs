@@ -14,12 +14,15 @@
     // Request password reset email
     public record PasswordResetRequestDto(string Email);
 
-    // Request email change
-    public record ChangeEmailRequestDto(string CustomerCode, string IdToken, string NewEmail);
-
     // Resend verification email
     public record ResendVerificationDto(string IdToken);
 
     // Confirm email change and update database
     public record ConfirmEmailChangeDto(string IdToken);
+
+    // Change password while logged in
+    public record ChangePasswordDto(
+        string Email,
+        string CurrentPassword,
+        string NewPassword);
 }
