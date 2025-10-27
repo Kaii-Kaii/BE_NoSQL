@@ -1,6 +1,8 @@
 using API_NoSQL.Dtos;
 using API_NoSQL.Models;
 using MongoDB.Driver;
+using System.Net;
+using System.Net.Mail;
 
 namespace API_NoSQL.Services
 {
@@ -9,12 +11,13 @@ namespace API_NoSQL.Services
         private readonly MongoDbContext _ctx;
         private readonly BookService _books;
         private readonly CustomerService _customers;
-
-        public OrderService(MongoDbContext ctx, BookService books, CustomerService customers)
+        private readonly EmailSettings _emailSettings;
+        public OrderService(MongoDbContext ctx, BookService books, CustomerService customers, EmailSettings emailSettings)
         {
             _ctx = ctx;
             _books = books;
             _customers = customers;
+            _emailSettings = emailSettings;
         }
 
         private static string NewOrderCode() =>

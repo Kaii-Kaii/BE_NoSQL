@@ -1,6 +1,7 @@
 using API_NoSQL.Dtos;
 using API_NoSQL.Security;
 using API_NoSQL.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_NoSQL.Controllers

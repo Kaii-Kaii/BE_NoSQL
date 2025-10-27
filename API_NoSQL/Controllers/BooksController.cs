@@ -97,5 +97,17 @@ namespace API_NoSQL.Controllers
             var ok = await _service.DeleteByCodeAsync(code);
             return ok ? NoContent() : NotFound();
         }
+        [HttpGet("top-categories")]
+        public async Task<IActionResult> GetTopCategories([FromQuery] int limit = 10)
+        {
+            limit = Math.Clamp(limit, 1, 100); // Ensure limit is between 1 and 100
+            var topCategories = await _service.GetTopCategoriesAsync(limit);
+            return Ok(topCategories.Select(tc => new
+            {
+                CategoryCode = tc.CategoryCode ?? "Unknown",
+                CategoryName = tc.CategoryName ?? "Unknown",
+                TotalSold = tc.TotalSold
+            }));
+        }
     }
 }

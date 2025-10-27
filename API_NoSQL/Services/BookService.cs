@@ -1,4 +1,6 @@
 using API_NoSQL.Models;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
 namespace API_NoSQL.Services
@@ -103,5 +105,42 @@ namespace API_NoSQL.Services
                 .Sort(Builders<Book>.Sort.Descending(b => b.Sold))
                 .Limit(limit)
                 .ToListAsync();
+
+        public async Task<List<(string? CategoryCode, string? CategoryName, int TotalSold)>> GetTopCategoriesAsync(int limit)
+        {
+            var pipeline = new List<BsonDocument>
+    {
+        new BsonDocument
+        {
+            { "$group", new BsonDocument
+                {
+                    { "_id", new BsonDocument
+                        {
+                            { "CategoryCode", "$loai.maloai" }, // Group by category code
+                            { "CategoryName", "$loai.tenloai" } // Include category name
+                        }
+                    },
+                    { "TotalSold", new BsonDocument { { "$sum", "$soluongdaban" } } } // Sum sold
+                }
+            }
+        },
+        new BsonDocument
+        {
+            { "$sort", new BsonDocument { { "TotalSold", -1 } } } // Sort descending by TotalSold
+        },
+        new BsonDocument
+        {
+            { "$limit", limit } // Limit the number of results
+        }
+    };
+
+            var result = await _ctx.Books.Aggregate<BsonDocument>(pipeline).ToListAsync();
+
+            return result.Select(doc => (
+                CategoryCode: doc["_id"]["CategoryCode"].AsString,
+                CategoryName: doc["_id"]["CategoryName"].AsString,
+                TotalSold: doc["TotalSold"].AsInt32
+            )).ToList();
+        }
     }
 }
