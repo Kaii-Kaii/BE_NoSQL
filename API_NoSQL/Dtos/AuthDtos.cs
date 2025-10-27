@@ -1,18 +1,25 @@
 ﻿namespace API_NoSQL.Dtos
 {
-    public record LoginDto(string Username, string Password);
+    // Email/Password login (email = username)
+    public record EmailLoginDto(string Email, string Password);
 
-    public record RegisterDto(
+    // Email/Password registration (email = username)
+    public record EmailRegisterDto(
+        string Email,
+        string Password,
         string FullName,
         string Phone,
-        string Email,
-        string Address,
-        string Username,
-        string Password);
+        string Address);
 
-    // NEW: đổi mật khẩu
-    public record ChangePasswordDto(
-        string Username,
-        string OldPassword,
-        string NewPassword);
+    // Request password reset email
+    public record PasswordResetRequestDto(string Email);
+
+    // Request email change
+    public record ChangeEmailRequestDto(string CustomerCode, string IdToken, string NewEmail);
+
+    // Resend verification email
+    public record ResendVerificationDto(string IdToken);
+
+    // Confirm email change and update database
+    public record ConfirmEmailChangeDto(string IdToken);
 }

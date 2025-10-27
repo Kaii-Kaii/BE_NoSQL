@@ -1,5 +1,4 @@
 ﻿using API_NoSQL.Dtos;
-using API_NoSQL.Models;
 using API_NoSQL.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,82 +8,83 @@ namespace API_NoSQL.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly AuthService _auth;
-        private readonly CustomerService _customers;
+        private readonly FirebaseEmailAuthService _firebaseAuth;
 
-        public AuthController(AuthService auth, CustomerService customers)
+        public AuthController(FirebaseEmailAuthService firebaseAuth)
         {
-            _auth = auth;
-            _customers = customers;
+            _firebaseAuth = firebaseAuth;
         }
 
+        // Email/Password login via Firebase
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto dto)
+        public async Task<IActionResult> Login([FromBody] EmailLoginDto dto)
         {
-            var (ok, error, customer) = await _auth.LoginAsync(dto);
+            var (ok, error, customer) = await _firebaseAuth.LoginAsync(dto);
             if (!ok) return Unauthorized(new { error });
             return Ok(new
             {
                 customer!.Code,
                 customer.FullName,
+                customer.Email,
                 customer.Account.Username,
                 customer.Account.Role,
+                customer.Account.Status, // ← Trả về trạng thái
                 customer.Avatar
             });
         }
 
+        // Email/Password registration via Firebase (auto sends verification email)
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+        public async Task<IActionResult> Register([FromBody] EmailRegisterDto dto)
         {
-            var byUsername = await _customers.GetByUsernameAsync(dto.Username);
-            if (byUsername is not null)
-                return Conflict(new { error = $"Username {dto.Username} already taken." });
-
-            static string NewCustomerCode() => $"KH{DateTime.UtcNow:yyyyMMddHHmmssfff}";
-
-            var c = new Customer
-            {
-                Code = NewCustomerCode(),
-                FullName = dto.FullName,
-                Phone = dto.Phone,
-                Email = dto.Email,
-                Address = dto.Address,
-                Avatar = null,
-                Account = new Account
-                {
-                    Username = dto.Username,
-                    Role = "khachhang"
-                },
-                Orders = new List<Order>()
-            };
-
-            await _customers.CreateAsync(c, dto.Password);
-            c.Account.PasswordHash = string.Empty;
+            var (ok, error, customer) = await _firebaseAuth.RegisterAsync(dto);
+            if (!ok) return BadRequest(new { error });
 
             return CreatedAtAction(
                 actionName: "GetByCode",
                 controllerName: "Customers",
-                routeValues: new { code = c.Code },
-                value: new { c.Code, c.FullName, c.Account.Username, c.Account.Role, c.Avatar });
+                routeValues: new { code = customer!.Code },
+                value: new 
+                { 
+                    customer.Code, 
+                    customer.FullName, 
+                    customer.Email,
+                    customer.Account.Username,
+                    customer.Account.Role,
+                    customer.Account.Status, // ← Trả về trạng thái
+                    customer.Avatar,
+                    message = "Registration successful. Please check your email to verify your account."
+                });
         }
 
-        // NEW: đổi mật khẩu
-        [HttpPost("change-password")]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+        // Request password reset email via Firebase
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] PasswordResetRequestDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Username) ||
-                string.IsNullOrWhiteSpace(dto.OldPassword) ||
-                string.IsNullOrWhiteSpace(dto.NewPassword))
-                return BadRequest(new { error = "Invalid payload" });
+            var sent = await _firebaseAuth.SendPasswordResetEmailAsync(dto.Email);
+            if (!sent) return BadRequest(new { error = "Failed to send password reset email." });
+            
+            return Ok(new { message = "Password reset email sent. Please check your inbox." });
+        }
 
-            var (ok, error) = await _customers.ChangePasswordAsync(dto.Username, dto.OldPassword, dto.NewPassword);
-            if (!ok)
-            {
-                if (error == "User not found") return NotFound(new { error });
-                return BadRequest(new { error });
-            }
+        // Resend verification email
+        [HttpPost("resend-verification")]
+        public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationDto dto)
+        {
+            var sent = await _firebaseAuth.SendVerificationEmailAsync(dto.IdToken);
+            if (!sent) return BadRequest(new { error = "Failed to send verification email." });
+            
+            return Ok(new { message = "Verification email sent. Please check your inbox." });
+        }
 
-            return NoContent();
+        // Start email change process (sends verification to new email)
+        [HttpPost("change-email")]
+        public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailRequestDto dto)
+        {
+            var (ok, error) = await _firebaseAuth.StartChangeEmailAsync(dto.CustomerCode, dto.IdToken, dto.NewEmail);
+            if (!ok) return BadRequest(new { error });
+            
+            return Ok(new { message = "Email changed. Please verify and login with new email." });
         }
     }
 }

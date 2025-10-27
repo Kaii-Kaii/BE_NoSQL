@@ -5,9 +5,6 @@ using System.Text.Json.Serialization;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 
-
-
-
 var builder = WebApplication.CreateBuilder(args);
 
 Env.Load();
@@ -27,14 +24,25 @@ var cloudinarySettings = new CloudinarySettings
 builder.Services.AddSingleton(cloudinarySettings);
 builder.Services.AddScoped<CloudinaryService>();
 
+// Email Settings
+var emailSettings = new EmailSettings
+{
+    DefaultEmail = Environment.GetEnvironmentVariable("DEFAULT_EMAIL") ?? "noreply@nosql.com"
+};
+builder.Services.AddSingleton(emailSettings);
+
+// Add HttpClient for FirebaseEmailAuthService
+builder.Services.AddHttpClient();
+
 builder.Services.AddScoped<BookService>();
 builder.Services.AddScoped<CustomerService>();
 builder.Services.AddScoped<OrderService>();
-builder.Services.AddScoped<AuthService>();
+// REMOVED: AuthService - not needed anymore (using Firebase only)
 builder.Services.AddScoped<StatsService>();
 builder.Services.AddScoped<GoogleAuthService>();
+builder.Services.AddScoped<FirebaseEmailAuthService>();
 
-// NEW: Configure JSON serialization to preserve Unicode characters (Vietnamese diacritics)
+// Configure JSON serialization to preserve Unicode characters (Vietnamese diacritics)
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {

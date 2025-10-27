@@ -1,4 +1,4 @@
-using MongoDB.Bson;
+ï»¿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace API_NoSQL.Models
@@ -10,7 +10,7 @@ namespace API_NoSQL.Models
         public string? Id { get; set; }
 
         [BsonElement("makh")]
-        public string Code { get; set; } = default!; // e.g., "KH001"
+        public string Code { get; set; } = default!;
 
         [BsonElement("hoten")]
         public string FullName { get; set; } = default!;
@@ -24,7 +24,6 @@ namespace API_NoSQL.Models
         [BsonElement("diachi")]
         public string Address { get; set; } = default!;
 
-        // NEW: Avatar URL, nullable. Not stored until uploaded.
         [BsonElement("avatar")]
         [BsonIgnoreIfNull]
         public string? Avatar { get; set; }
@@ -45,13 +44,17 @@ namespace API_NoSQL.Models
         public string PasswordHash { get; set; } = default!;
 
         [BsonElement("vaitro")]
-        public string Role { get; set; } = "khachhang"; // or "admin"
+        public string Role { get; set; } = "khachhang";
+
+        // NEW: Tráº¡ng thÃ¡i xÃ¡c minh email
+        [BsonElement("trangthai")]
+        public string Status { get; set; } = "ChuaXacMinh"; // "ChuaXacMinh" | "DaXacMinh"
     }
 
     public class Order
     {
         [BsonElement("mahd")]
-        public string Code { get; set; } = default!; // e.g., "HD001"
+        public string Code { get; set; } = default!;
 
         [BsonElement("ngaylap")]
         public DateTime CreatedAt { get; set; }
@@ -59,14 +62,11 @@ namespace API_NoSQL.Models
         [BsonElement("tongtien")]
         public int Total { get; set; }
 
-        // NEW: Order status workflow
-        // "Ðã d?t hàng" -> "Ðang giao" -> "Hoàn thành"
         [BsonElement("trangthai")]
-        public string Status { get; set; } = "Ðã d?t hàng";
+        public string Status { get; set; } = "DaDatHang";
 
-        // NEW: Payment method - "Ti?n m?t" or "Chuy?n kho?n"
         [BsonElement("hinhthucthanhtoan")]
-        public string PaymentMethod { get; set; } = "Ti?n m?t";
+        public string PaymentMethod { get; set; } = "TienMat";
 
         [BsonElement("chitiet")]
         public List<OrderItem> Items { get; set; } = [];

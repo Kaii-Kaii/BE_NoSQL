@@ -1,4 +1,4 @@
-using API_NoSQL.Dtos;
+﻿using API_NoSQL.Dtos;
 using API_NoSQL.Models;
 using FirebaseAdmin;
 using FirebaseAdmin.Auth;
@@ -35,7 +35,13 @@ namespace API_NoSQL.Services
         {
             if (_initialized) return;
 
-            // 1) Prefer PATH (absolute or relative to app root)
+            // ✅ Check xem đã có FirebaseApp chưa
+            if (FirebaseApp.DefaultInstance != null)
+            {
+                _initialized = true;
+                return;
+            }
+
             var credPath = Environment.GetEnvironmentVariable("FIREBASE_CRED_PATH");
             var resolved = ResolvePath(credPath);
             if (resolved is not null)
@@ -48,7 +54,6 @@ namespace API_NoSQL.Services
                 return;
             }
 
-            // 2) Or BASE64 JSON
             var b64 = Environment.GetEnvironmentVariable("FIREBASE_CRED_JSON_BASE64");
             if (!string.IsNullOrWhiteSpace(b64))
             {
@@ -62,7 +67,6 @@ namespace API_NoSQL.Services
                 return;
             }
 
-            // 3) Or RAW JSON (single line with \n in private_key)
             var raw = Environment.GetEnvironmentVariable("FIREBASE_CRED_JSON");
             if (!string.IsNullOrWhiteSpace(raw))
             {
@@ -111,7 +115,8 @@ namespace API_NoSQL.Services
                         Account = new Account
                         {
                             Username = email,
-                            Role = "khachhang"
+                            Role = "khachhang",
+                            Status = "DaXacMinh" // ← Google users đã xác minh
                         },
                         Orders = new List<Order>()
                     };
