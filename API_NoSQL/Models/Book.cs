@@ -1,4 +1,4 @@
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace API_NoSQL.Models
@@ -10,7 +10,7 @@ namespace API_NoSQL.Models
         public string? Id { get; set; }
 
         [BsonElement("masp")]
-        public string Code { get; set; } = default!; // e.g., "GKTH6"
+        public string Code { get; set; } = default!;
 
         [BsonElement("tensp")]
         public string Name { get; set; } = default!;
@@ -34,7 +34,7 @@ namespace API_NoSQL.Models
         public string? CoverUrl { get; set; }
 
         [BsonElement("trangthai")]
-        public string? Status { get; set; } // e.g., "c�n h�ng"
+        public string? Status { get; set; }
 
         [BsonElement("soluongdaban")]
         public int Sold { get; set; }
@@ -44,6 +44,16 @@ namespace API_NoSQL.Models
 
         [BsonElement("nxb")]
         public Publisher? Publisher { get; set; }
+
+        // ✅ THÊM DANH SÁCH ĐÁNH GIÁ
+        [BsonElement("danhgia")]
+        [BsonIgnoreIfNull]
+        public List<BookReview>? Reviews { get; set; }
+
+        // ✅ THÊM ĐIỂM TRUNG BÌNH
+        [BsonElement("diemtrungbinh")]
+        [BsonIgnoreIfDefault]
+        public double AverageRating { get; set; }
     }
 
     public class BookCategory
@@ -65,6 +75,39 @@ namespace API_NoSQL.Models
 
         [BsonElement("diachi")]
         public string? Address { get; set; }
+    }
+
+    // ✅ MODEL ĐÁNH GIÁ SÁCH
+    public class BookReview
+    {
+        [BsonElement("madg")]
+        public string ReviewId { get; set; } = default!;
+
+        [BsonElement("makh")]
+        public string CustomerCode { get; set; } = default!;
+
+        [BsonElement("tennguoidanhgia")]
+        public string ReviewerName { get; set; } = default!;
+
+        [BsonElement("avatar")]  // ✅ THÊM AVATAR
+        [BsonIgnoreIfNull]
+        public string? AvatarUrl { get; set; }
+
+        [BsonElement("mahd")]
+        public string OrderCode { get; set; } = default!;
+
+        [BsonElement("sosao")]
+        public int Rating { get; set; }
+
+        [BsonElement("noidung")]
+        public string Content { get; set; } = default!;
+
+        [BsonElement("thoigian")]
+        public DateTime CreatedAt { get; set; }
+
+        [BsonElement("capnhat")]
+        [BsonIgnoreIfNull]
+        public DateTime? UpdatedAt { get; set; }
     }
 }
 

@@ -41,6 +41,7 @@ builder.Services.AddScoped<StatsService>();
 builder.Services.AddScoped<GoogleAuthService>();
 builder.Services.AddScoped<FirebaseEmailAuthService>();
 builder.Services.AddScoped<InventoryService>(); // ✅ THÊM DÒNG NÀY
+builder.Services.AddScoped<ReviewService>();
 
 // Configure JSON serialization to preserve Unicode characters (Vietnamese diacritics)
 builder.Services.AddControllers()
