@@ -33,6 +33,11 @@ namespace API_NoSQL.Models
 
         [BsonElement("hoadon")]
         public List<Order> Orders { get; set; } = [];
+
+        // Danh sách phiếu nhập hàng cho admin
+        [BsonElement("phieunhap")]
+        [BsonIgnoreIfNull]
+        public List<ImportInvoice>? ImportInvoices { get; set; }
     }
 
     public class Account
@@ -46,9 +51,8 @@ namespace API_NoSQL.Models
         [BsonElement("vaitro")]
         public string Role { get; set; } = "khachhang";
 
-        // NEW: Trạng thái xác minh email
         [BsonElement("trangthai")]
-        public string Status { get; set; } = "ChuaXacMinh"; // "ChuaXacMinh" | "DaXacMinh"
+        public string Status { get; set; } = "ChuaXacMinh";
     }
 
     public class Order
@@ -87,6 +91,46 @@ namespace API_NoSQL.Models
         public int UnitPrice { get; set; }
 
         [BsonElement("thanhtien")]
+        public int LineTotal { get; set; }
+    }
+
+    // Model cho phiếu nhập hàng
+    public class ImportInvoice
+    {
+        [BsonElement("mapn")]
+        public string Code { get; set; } = default!;
+
+        [BsonElement("ngaynhap")]
+        public DateTime ImportDate { get; set; }
+
+        [BsonElement("tongsoluong")]
+        public int TotalQuantity { get; set; }
+
+        [BsonElement("tongtien")]  // ← THÊM TỔNG TIỀN
+        public int TotalAmount { get; set; }
+
+        [BsonElement("ghichu")]
+        public string? Note { get; set; }
+
+        [BsonElement("chitiet")]
+        public List<ImportItem> Items { get; set; } = [];
+    }
+
+    public class ImportItem
+    {
+        [BsonElement("masp")]
+        public string BookCode { get; set; } = default!;
+
+        [BsonElement("tensp")]
+        public string BookName { get; set; } = default!;
+
+        [BsonElement("soluong")]
+        public int Quantity { get; set; }
+
+        [BsonElement("dongianhap")]  // ← THÊM GIÁ NHẬP
+        public int UnitPrice { get; set; }
+
+        [BsonElement("thanhtien")]  // ← THÊM THÀNH TIỀN
         public int LineTotal { get; set; }
     }
 }

@@ -1,25 +1,32 @@
-using API_NoSQL.Dtos;
+﻿using API_NoSQL.Dtos;
 using API_NoSQL.Security;
 using API_NoSQL.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace API_NoSQL.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [RoleAuthorize("admin")] // use header: X-Role: admin
+    [RoleAuthorize("admin")]
     public class AdminController : ControllerBase
     {
         private readonly OrderService _orders;
         private readonly BookService _books;
         private readonly CloudinaryService _cloudinary;
+        private readonly InventoryService _inventory;
 
-        public AdminController(OrderService orders, BookService books, CloudinaryService cloudinary)
+        public AdminController(
+            OrderService orders, 
+            BookService books, 
+            CloudinaryService cloudinary,
+            InventoryService inventory)
         {
             _orders = orders;
             _books = books;
             _cloudinary = cloudinary;
+            _inventory = inventory;
         }
 
         // LIST BOOKS FOR ADMIN (reuse search)
@@ -174,6 +181,87 @@ namespace API_NoSQL.Controllers
             var total = await new StatsService(HttpContext.RequestServices.GetRequiredService<MongoDbContext>(), _books)
                 .GetRevenueAsync(y, month);
             return Ok(new { year = y, month, total });
+        }
+
+        // POST /api/Admin/inventory/import
+        /// <summary>
+        /// Admin nhập hàng - tạo phiếu nhập và cập nhật tồn kho
+        /// </summary>
+        [HttpPost("inventory/import")]
+        public async Task<IActionResult> ImportInventory([FromBody] ImportInvoiceDto dto)
+        {
+            if (dto.Items == null || dto.Items.Count == 0)
+                return BadRequest(new { error = "Items cannot be empty" });
+
+            // Lấy username từ header
+            var username = Request.Headers["X-Username"].ToString();
+            if (string.IsNullOrEmpty(username))
+                return BadRequest(new { error = "X-Username header is required" });
+
+            // Chuyển đổi DTO sang tuple (có cả UnitPrice)
+            var items = dto.Items.Select(i => (i.BookCode, i.Quantity, i.UnitPrice)).ToList();
+
+            var (ok, error, invoice) = await _inventory.CreateImportInvoiceAsync(username, items, dto.Note);
+
+            if (!ok)
+                return BadRequest(new { error });
+
+            return Created($"/api/Admin/inventory/import/{invoice!.Code}", invoice);
+        }
+
+        // GET /api/Admin/inventory/imports
+        /// <summary>
+        /// Lấy danh sách phiếu nhập của admin đang đăng nhập
+        /// </summary>
+        [HttpGet("inventory/imports")]
+        public async Task<IActionResult> GetImportInvoices()
+        {
+            var username = Request.Headers["X-Username"].ToString();
+            if (string.IsNullOrEmpty(username))
+                return BadRequest(new { error = "X-Username header is required" });
+
+            var invoices = await _inventory.GetImportInvoicesByAdminAsync(username);
+            return Ok(invoices);
+        }
+
+        // GET /api/Admin/inventory/imports/{code}
+        /// <summary>
+        /// Lấy chi tiết 1 phiếu nhập
+        /// </summary>
+        [HttpGet("inventory/imports/{code}")]
+        public async Task<IActionResult> GetImportInvoiceDetail(string code)
+        {
+            var username = Request.Headers["X-Username"].ToString();
+            if (string.IsNullOrEmpty(username))
+                return BadRequest(new { error = "X-Username header is required" });
+
+            var invoice = await _inventory.GetImportInvoiceByCodeAsync(username, code);
+            if (invoice == null)
+                return NotFound(new { error = "Import invoice not found" });
+
+            return Ok(invoice);
+        }
+
+        // GET /api/Admin/inventory/imports/history?page=1&pageSize=20&fromDate=2025-01-01&toDate=2025-12-31
+        /// <summary>
+        /// Lấy lịch sử nhập hàng với phân pag và lọc theo ngày
+        /// </summary>
+        [HttpGet("inventory/imports/history")]
+        public async Task<IActionResult> GetImportHistory(
+            [FromQuery] int page = 1, 
+            [FromQuery] int pageSize = 20,
+            [FromQuery] DateTime? fromDate = null,
+            [FromQuery] DateTime? toDate = null)
+        {
+            var username = Request.Headers["X-Username"].ToString();
+            if (string.IsNullOrEmpty(username))
+                return BadRequest(new { error = "X-Username header is required" });
+
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 1, 100);
+
+            var (items, total) = await _inventory.GetImportHistoryAsync(username, page, pageSize, fromDate, toDate);
+            return Ok(new { total, page, pageSize, items });
         }
     }
 }

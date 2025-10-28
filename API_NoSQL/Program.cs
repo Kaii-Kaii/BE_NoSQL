@@ -37,10 +37,10 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<BookService>();
 builder.Services.AddScoped<CustomerService>();
 builder.Services.AddScoped<OrderService>();
-// REMOVED: AuthService - not needed anymore (using Firebase only)
 builder.Services.AddScoped<StatsService>();
 builder.Services.AddScoped<GoogleAuthService>();
 builder.Services.AddScoped<FirebaseEmailAuthService>();
+builder.Services.AddScoped<InventoryService>(); // ✅ THÊM DÒNG NÀY
 
 // Configure JSON serialization to preserve Unicode characters (Vietnamese diacritics)
 builder.Services.AddControllers()
