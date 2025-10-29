@@ -1,4 +1,4 @@
-using API_NoSQL.Dtos;
+﻿using API_NoSQL.Dtos;
 using API_NoSQL.Models;
 using API_NoSQL.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -38,6 +38,22 @@ namespace API_NoSQL.Controllers
             return Ok(items);
         }
 
+        // NEW: Get all categories
+        [HttpGet("categories")]
+        public async Task<IActionResult> GetCategories()
+        {
+            var categories = await _service.GetAllCategoriesAsync();
+            return Ok(categories);
+        }
+
+        // NEW: Get all publishers
+        [HttpGet("publishers")]
+        public async Task<IActionResult> GetPublishers()
+        {
+            var publishers = await _service.GetAllPublishersAsync();
+            return Ok(publishers);
+        }
+
         [HttpGet("{code}")]
         public async Task<ActionResult<Book>> GetByCode(string code)
         {
@@ -48,12 +64,19 @@ namespace API_NoSQL.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] BookCreateDto dto)
         {
-            var existing = await _service.GetByCodeAsync(dto.Code);
-            if (existing is not null) return Conflict($"Book code {dto.Code} already exists.");
+            // Tự động tạo mã nếu không có
+            var bookCode = string.IsNullOrWhiteSpace(dto.Code) 
+                ? _service.GenerateBookCode() 
+                : dto.Code;
+
+            // Kiểm tra mã đã tồn tại (trong cả 2 trường hợp)
+            var existing = await _service.GetByCodeAsync(bookCode);
+            if (existing is not null) 
+                return Conflict(new { error = $"Mã sách {bookCode} đã tồn tại" });
 
             var b = new Book
             {
-                Code = dto.Code,
+                Code = bookCode,
                 Name = dto.Name,
                 Author = dto.Author,
                 PublishYear = dto.PublishYear,
@@ -97,10 +120,11 @@ namespace API_NoSQL.Controllers
             var ok = await _service.DeleteByCodeAsync(code);
             return ok ? NoContent() : NotFound();
         }
+
         [HttpGet("top-categories")]
         public async Task<IActionResult> GetTopCategories([FromQuery] int limit = 10)
         {
-            limit = Math.Clamp(limit, 1, 100); // Ensure limit is between 1 and 100
+            limit = Math.Clamp(limit, 1, 100);
             var topCategories = await _service.GetTopCategoriesAsync(limit);
             return Ok(topCategories.Select(tc => new
             {

@@ -4,6 +4,7 @@ using API_NoSQL.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace API_NoSQL.Controllers
 {
@@ -78,8 +79,15 @@ namespace API_NoSQL.Controllers
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> CreateBook([FromForm] AdminBookCreateFormDto dto)
         {
-            var existing = await _books.GetByCodeAsync(dto.Code);
-            if (existing is not null) return Conflict(new { error = $"Book code {dto.Code} already exists." });
+            // Tự động tạo mã nếu không có
+            var bookCode = string.IsNullOrWhiteSpace(dto.Code) 
+                ? _books.GenerateBookCode() 
+                : dto.Code;
+
+            // Kiểm tra mã đã tồn tại
+            var existing = await _books.GetByCodeAsync(bookCode);
+            if (existing is not null) 
+                return Conflict(new { error = $"Mã sách {bookCode} đã tồn tại" });
 
             string? coverUrl = null;
             if (dto.Cover is not null && dto.Cover.Length > 0)
@@ -89,7 +97,7 @@ namespace API_NoSQL.Controllers
 
             var b = new Models.Book
             {
-                Code = dto.Code,
+                Code = bookCode,
                 Name = dto.Name,
                 Author = dto.Author,
                 PublishYear = dto.PublishYear,
@@ -263,5 +271,45 @@ namespace API_NoSQL.Controllers
             var (items, total) = await _inventory.GetImportHistoryAsync(username, page, pageSize, fromDate, toDate);
             return Ok(new { total, page, pageSize, items });
         }
+    }
+
+    [BsonIgnoreExtraElements] // ← THÊM dòng này để bỏ qua trường không có trong model
+    public class Order
+    {
+        [BsonElement("mahd")]
+        public string Code { get; set; } = default!;
+
+        [BsonElement("ngaylap")]
+        public DateTime CreatedAt { get; set; }
+
+        [BsonElement("tongtien")]
+        public int Total { get; set; }
+
+        [BsonElement("trangthai")]
+        public string Status { get; set; } = "DaDatHang";
+
+        [BsonElement("hinhthucthanhtoan")]
+        public string PaymentMethod { get; set; } = "TienMat";
+
+        [BsonElement("chitiet")]
+        public List<OrderItem> Items { get; set; } = [];
+
+        // NEW: Thông tin huỷ đơn
+        [BsonElement("lydohuy")]
+        [BsonIgnoreIfNull]
+        public string? CancelReason { get; set; }
+
+        // NEW: Thời gian hoàn thành HOẶC huỷ đơn (dùng chung)
+        [BsonElement("thoigianhoanthanh")]
+        [BsonIgnoreIfNull]
+        public DateTime? CompletedAt { get; set; }
+    }
+
+    public class OrderItem
+    {
+        // Define properties as needed, for example:
+        public string BookCode { get; set; } = default!;
+        public int Quantity { get; set; }
+        public int UnitPrice { get; set; }
     }
 }

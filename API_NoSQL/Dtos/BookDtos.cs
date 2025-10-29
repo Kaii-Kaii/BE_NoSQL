@@ -1,10 +1,10 @@
-using API_NoSQL.Models;
+﻿using API_NoSQL.Models;
 using Microsoft.AspNetCore.Http;
 
 namespace API_NoSQL.Dtos
 {
     public record BookCreateDto(
-        string Code,
+        string? Code, // ← Thay đổi thành nullable
         string Name,
         string Author,
         int PublishYear,

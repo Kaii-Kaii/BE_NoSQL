@@ -1,4 +1,4 @@
-using API_NoSQL.Dtos;
+﻿using API_NoSQL.Dtos;
 using API_NoSQL.Models;
 using API_NoSQL.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -49,7 +49,7 @@ namespace API_NoSQL.Controllers
                     Username = dto.Username,
                     Role = string.IsNullOrWhiteSpace(dto.Role) ? "khachhang" : dto.Role!
                 },
-                Orders = new List<Order>()
+                Orders = new List<API_NoSQL.Models.Order>()
             };
 
             await _service.CreateAsync(c, dto.Password);
@@ -109,5 +109,21 @@ namespace API_NoSQL.Controllers
 
             return Ok(new { avatar = url });
         }
+    }
+
+    // NEW: Admin create book via form-data with image upload
+    public class AdminBookCreateFormDto
+    {
+        public string? Code { get; set; } // ← ĐỔI THÀNH NULLABLE
+        public string Name { get; set; } = default!;
+        public string Author { get; set; } = default!;
+        public int PublishYear { get; set; }
+        public int Price { get; set; }
+        public int InStock { get; set; }
+        public string? Description { get; set; }
+        public string? Status { get; set; }
+        public BookCategory? Category { get; set; }
+        public Publisher? Publisher { get; set; }
+        public IFormFile? Cover { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-using API_NoSQL.Dtos;
+﻿using API_NoSQL.Dtos;
 using API_NoSQL.Models;
 using MongoDB.Driver;
 using System.Net;
@@ -131,8 +131,8 @@ namespace API_NoSQL.Services
         // NEW: Admin updates order status
         public async Task<bool> UpdateOrderStatusAsync(string customerCode, string orderCode, string newStatus)
         {
-            // Accept only normalized statuses without accents
-            var validStatuses = new[] { "DaDatHang", "DangGiao", "HoanThanh" };
+            // Accept only normalized statuses without accents - THÊM "DaHuy"
+            var validStatuses = new[] { "DaDatHang", "DangGiao", "HoanThanh", "DaHuy" };
             if (!validStatuses.Contains(newStatus))
                 return false;
 
@@ -160,7 +160,56 @@ namespace API_NoSQL.Services
                 return false;
 
             order.Status = "HoanThanh";
+            order.CompletedAt = DateTime.UtcNow; // Lưu thời gian hoàn thành
             return await _customers.UpdateAsync(customerCode, c => c.Orders = customer.Orders);
+        }
+
+        // NEW: Customer cancels order (only allowed for "DaDatHang" status)
+        public async Task<(bool Ok, string? Error)> CancelOrderAsync(string customerCode, string orderCode, string reason)
+        {
+            // Validate reason
+            if (string.IsNullOrWhiteSpace(reason))
+                return (false, "Vui lòng nhập lý do huỷ đơn hàng");
+
+            var customer = await _customers.GetByCodeAsync(customerCode);
+            if (customer is null) 
+                return (false, "Không tìm thấy khách hàng");
+
+            var order = customer.Orders.FirstOrDefault(o => o.Code == orderCode);
+            if (order is null) 
+                return (false, "Không tìm thấy đơn hàng");
+
+            // Only allow cancellation if status is "DaDatHang"
+            if (order.Status != "DaDatHang")
+            {
+                if (order.Status == "DangGiao")
+                    return (false, "Không thể huỷ đơn hàng đang được giao");
+                if (order.Status == "HoanThanh")
+                    return (false, "Không thể huỷ đơn hàng đã hoàn thành");
+                if (order.Status == "DaHuy")
+                    return (false, "Đơn hàng đã được huỷ trước đó");
+                
+                return (false, $"Không thể huỷ đơn hàng có trạng thái '{order.Status}'");
+            }
+
+            // Restore stock when order is cancelled
+            foreach (var item in order.Items)
+            {
+                // Reverse the stock adjustment (add back quantity, subtract from sold)
+                await _books.AdjustStockAndSoldAsync(item.BookCode, -item.Quantity);
+            }
+
+            // Update order status to cancelled with reason
+            order.Status = "DaHuy";
+            order.CancelReason = reason;
+            order.CompletedAt = DateTime.UtcNow; // Dùng chung trường này cho thời gian huỷ
+            
+            var success = await _customers.UpdateAsync(customerCode, c => c.Orders = customer.Orders);
+            
+            if (success)
+                return (true, null);
+            
+            return (false, "Không thể cập nhật trạng thái đơn hàng");
         }
     }
 }

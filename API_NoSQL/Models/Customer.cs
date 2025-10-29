@@ -55,6 +55,7 @@ namespace API_NoSQL.Models
         public string Status { get; set; } = "ChuaXacMinh";
     }
 
+    [BsonIgnoreExtraElements] // ← THÊM dòng này
     public class Order
     {
         [BsonElement("mahd")]
@@ -74,6 +75,16 @@ namespace API_NoSQL.Models
 
         [BsonElement("chitiet")]
         public List<OrderItem> Items { get; set; } = [];
+
+        // NEW: Thông tin huỷ đơn
+        [BsonElement("lydohuy")]
+        [BsonIgnoreIfNull]
+        public string? CancelReason { get; set; }
+
+        // NEW: Thời gian hoàn thành HOẶC huỷ đơn (dùng chung)
+        [BsonElement("thoigianhoanthanh")]
+        [BsonIgnoreIfNull]
+        public DateTime? CompletedAt { get; set; }
     }
 
     public class OrderItem
@@ -106,7 +117,7 @@ namespace API_NoSQL.Models
         [BsonElement("tongsoluong")]
         public int TotalQuantity { get; set; }
 
-        [BsonElement("tongtien")]  // ← THÊM TỔNG TIỀN
+        [BsonElement("tongtien")]
         public int TotalAmount { get; set; }
 
         [BsonElement("ghichu")]
@@ -127,10 +138,10 @@ namespace API_NoSQL.Models
         [BsonElement("soluong")]
         public int Quantity { get; set; }
 
-        [BsonElement("dongianhap")]  // ← THÊM GIÁ NHẬP
+        [BsonElement("dongianhap")]
         public int UnitPrice { get; set; }
 
-        [BsonElement("thanhtien")]  // ← THÊM THÀNH TIỀN
+        [BsonElement("thanhtien")]
         public int LineTotal { get; set; }
     }
 }

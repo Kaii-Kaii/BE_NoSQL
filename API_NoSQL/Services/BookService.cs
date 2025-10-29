@@ -109,30 +109,30 @@ namespace API_NoSQL.Services
         public async Task<List<(string? CategoryCode, string? CategoryName, int TotalSold)>> GetTopCategoriesAsync(int limit)
         {
             var pipeline = new List<BsonDocument>
-    {
-        new BsonDocument
-        {
-            { "$group", new BsonDocument
+            {
+                new BsonDocument
                 {
-                    { "_id", new BsonDocument
+                    { "$group", new BsonDocument
                         {
-                            { "CategoryCode", "$loai.maloai" }, // Group by category code
-                            { "CategoryName", "$loai.tenloai" } // Include category name
+                            { "_id", new BsonDocument
+                                {
+                                    { "CategoryCode", "$loai.maloai" },
+                                    { "CategoryName", "$loai.tenloai" }
+                                }
+                            },
+                            { "TotalSold", new BsonDocument { { "$sum", "$soluongdaban" } } }
                         }
-                    },
-                    { "TotalSold", new BsonDocument { { "$sum", "$soluongdaban" } } } // Sum sold
+                    }
+                },
+                new BsonDocument
+                {
+                    { "$sort", new BsonDocument { { "TotalSold", -1 } } }
+                },
+                new BsonDocument
+                {
+                    { "$limit", limit }
                 }
-            }
-        },
-        new BsonDocument
-        {
-            { "$sort", new BsonDocument { { "TotalSold", -1 } } } // Sort descending by TotalSold
-        },
-        new BsonDocument
-        {
-            { "$limit", limit } // Limit the number of results
-        }
-    };
+            };
 
             var result = await _ctx.Books.Aggregate<BsonDocument>(pipeline).ToListAsync();
 
@@ -141,6 +141,82 @@ namespace API_NoSQL.Services
                 CategoryName: doc["_id"]["CategoryName"].AsString,
                 TotalSold: doc["TotalSold"].AsInt32
             )).ToList();
+        }
+
+        // NEW: Get all distinct book categories
+        public async Task<List<BookCategory>> GetAllCategoriesAsync()
+        {
+            var pipeline = new[]
+            {
+                new BsonDocument("$match", new BsonDocument("loai", new BsonDocument("$ne", BsonNull.Value))),
+                new BsonDocument("$group", new BsonDocument
+                {
+                    { "_id", new BsonDocument
+                        {
+                            { "maloai", "$loai.maloai" },
+                            { "tenloai", "$loai.tenloai" }
+                        }
+                    }
+                }),
+                new BsonDocument("$sort", new BsonDocument("_id.tenloai", 1)),
+                new BsonDocument("$project", new BsonDocument
+                {
+                    { "_id", 0 },
+                    { "maloai", "$_id.maloai" },
+                    { "tenloai", "$_id.tenloai" }
+                })
+            };
+
+            var result = await _ctx.Books.Aggregate<BsonDocument>(pipeline).ToListAsync();
+            
+            return result.Select(doc => new BookCategory
+            {
+                Code = doc.Contains("maloai") ? doc["maloai"].AsString : null,
+                Name = doc.Contains("tenloai") ? doc["tenloai"].AsString : null
+            }).ToList();
+        }
+
+        // NEW: Get all distinct publishers
+        public async Task<List<Publisher>> GetAllPublishersAsync()
+        {
+            var pipeline = new[]
+            {
+                new BsonDocument("$match", new BsonDocument("nxb", new BsonDocument("$ne", BsonNull.Value))),
+                new BsonDocument("$group", new BsonDocument
+                {
+                    { "_id", new BsonDocument
+                        {
+                            { "manxb", "$nxb.manxb" },
+                            { "tennxb", "$nxb.tennxb" },
+                            { "diachi", "$nxb.diachi" }
+                        }
+                    }
+                }),
+                new BsonDocument("$sort", new BsonDocument("_id.tennxb", 1)),
+                new BsonDocument("$project", new BsonDocument
+                {
+                    { "_id", 0 },
+                    { "manxb", "$_id.manxb" },
+                    { "tennxb", "$_id.tennxb" },
+                    { "diachi", "$_id.diachi" }
+                })
+            };
+
+            var result = await _ctx.Books.Aggregate<BsonDocument>(pipeline).ToListAsync();
+            
+            return result.Select(doc => new Publisher
+            {
+                Code = doc.Contains("manxb") ? doc["manxb"].AsString : null,
+                Name = doc.Contains("tennxb") ? doc["tennxb"].AsString : null,
+                Address = doc.Contains("diachi") ? doc["diachi"].AsString : null
+            }).ToList();
+        }
+
+        // NEW: Generate unique book code (format: SPDDMMYYhhss)
+        public string GenerateBookCode()
+        {
+            var now = DateTime.Now;
+            return $"SP{now:ddMMyyHHmmss}"; // SP291025143025 (29/10/25 14:30:25)
         }
     }
 }
