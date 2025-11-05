@@ -1,5 +1,6 @@
 ﻿using API_NoSQL.Dtos;
 using API_NoSQL.Models;
+using API_NoSQL.Models.Emails;  // ← THÊM DÒNG NÀY
 using MongoDB.Driver;
 using System.Net;
 using System.Net.Mail;
@@ -12,12 +13,15 @@ namespace API_NoSQL.Services
         private readonly BookService _books;
         private readonly CustomerService _customers;
         private readonly EmailSettings _emailSettings;
-        public OrderService(MongoDbContext ctx, BookService books, CustomerService customers, EmailSettings emailSettings)
+        private readonly ISendGridEmailService _sendGridService;
+
+        public OrderService(MongoDbContext ctx, BookService books, CustomerService customers, EmailSettings emailSettings, ISendGridEmailService sendGridService)
         {
             _ctx = ctx;
             _books = books;
             _customers = customers;
             _emailSettings = emailSettings;
+            _sendGridService = sendGridService;
         }
 
         private static string NewOrderCode() =>
@@ -87,6 +91,34 @@ namespace API_NoSQL.Services
 
             customer.Orders.Add(order);
             await _customers.UpdateAsync(customer.Code, c => c.Orders = customer.Orders);
+
+            // Gửi email xác nhận (lấy info từ customer có sẵn)
+            var orderEmailData = new OrderEmailDto
+            {
+                CustomerName = customer.FullName,
+                CustomerEmail = customer.Email,
+                PhoneNumber = customer.Phone,
+                ShippingAddress = customer.Address,
+                OrderId = order.Code,
+                OrderDate = DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm"),
+                Items = order.Items.Select(i => new OrderItemDto
+                {
+                    ProductName = i.BookName,
+                    Quantity = i.Quantity,
+                    Price = i.UnitPrice,
+                    Subtotal = i.LineTotal
+                }).ToList(),
+                Subtotal = order.Total,
+                ShippingFee = 0,
+                Tax = 0,
+                Total = order.Total,
+                Status = order.Status
+            };
+
+            await _sendGridService.SendOrderConfirmationAsync(
+                customer.Email,
+                customer.FullName,
+                orderEmailData);
 
             return (true, null, order.Code);
         }
