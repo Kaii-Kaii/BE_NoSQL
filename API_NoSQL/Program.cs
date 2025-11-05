@@ -31,6 +31,16 @@ var emailSettings = new EmailSettings
 };
 builder.Services.AddSingleton(emailSettings);
 
+// SendGrid Settings
+var sendGridSettings = new SendGridSettings
+{
+    ApiKey = Environment.GetEnvironmentVariable("SENDGRID_APIKEY") ?? "",
+    FromEmail = Environment.GetEnvironmentVariable("SENDGRID_FROM_EMAIL") ?? "noreply@kaikikail.com",
+    FromName = Environment.GetEnvironmentVariable("SENDGRID_FROM_NAME") ?? "KaiiKaii Shop",
+    TemplateId = Environment.GetEnvironmentVariable("SENDGRID_TEMPLATE_ID") ?? ""
+};
+builder.Services.AddSingleton(sendGridSettings);
+
 // Add HttpClient for FirebaseEmailAuthService
 builder.Services.AddHttpClient();
 
@@ -40,8 +50,9 @@ builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<StatsService>();
 builder.Services.AddScoped<GoogleAuthService>();
 builder.Services.AddScoped<FirebaseEmailAuthService>();
-builder.Services.AddScoped<InventoryService>(); // ✅ THÊM DÒNG NÀY
+builder.Services.AddScoped<InventoryService>();
 builder.Services.AddScoped<ReviewService>();
+builder.Services.AddScoped<ISendGridEmailService, SendGridEmailService>();
 
 // Configure JSON serialization to preserve Unicode characters (Vietnamese diacritics)
 builder.Services.AddControllers()

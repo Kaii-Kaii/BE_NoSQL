@@ -3,7 +3,7 @@
     public record OrderItemCreateDto(string BookCode, int Quantity);
 
     public record CreateOrderDto(
-        string CustomerCode, 
+        string CustomerCode,
         IList<OrderItemCreateDto> Items,
         string PaymentMethod); // "Tiền mặt" or "Chuyển khoản"
 
