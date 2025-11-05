@@ -17,17 +17,20 @@ namespace API_NoSQL.Controllers
         private readonly BookService _books;
         private readonly CloudinaryService _cloudinary;
         private readonly InventoryService _inventory;
+        private readonly StatsService _stats;
 
         public AdminController(
             OrderService orders, 
             BookService books, 
             CloudinaryService cloudinary,
-            InventoryService inventory)
+            InventoryService inventory,
+            StatsService stats)
         {
             _orders = orders;
             _books = books;
             _cloudinary = cloudinary;
             _inventory = inventory;
+            _stats = stats;
         }
 
         // LIST BOOKS FOR ADMIN (reuse search)
@@ -270,6 +273,31 @@ namespace API_NoSQL.Controllers
 
             var (items, total) = await _inventory.GetImportHistoryAsync(username, page, pageSize, fromDate, toDate);
             return Ok(new { total, page, pageSize, items });
+        }
+
+        [HttpGet("statistic/customers")]
+        public async Task<IActionResult> GetCustomersStatistic(
+            [FromQuery] DateTime? from = null,
+            [FromQuery] DateTime? to = null)
+        {
+            var customers = await _stats.GetCustomersByRangeAsync(from, to);
+
+            var result = customers.Select(c => new
+            {
+                c.Code,
+                c.FullName,
+                c.Email,
+                c.Phone,
+                c.Address,
+                // Lấy ngày lập đơn hàng mới nhất (ngaylap trong hoadon)
+                OrderDate = c.Orders != null && c.Orders.Any()
+                    ? c.Orders.Max(o => o.CreatedAt.ToLocalTime())
+                    : (DateTime?)null,
+                OrderCount = c.Orders?.Count ?? 0,
+                TotalSpent = c.Orders?.Sum(o => o.Total) ?? 0
+            });
+
+            return Ok(result);
         }
     }
 
