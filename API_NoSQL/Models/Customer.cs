@@ -38,6 +38,11 @@ namespace API_NoSQL.Models
         [BsonElement("phieunhap")]
         [BsonIgnoreIfNull]
         public List<ImportInvoice>? ImportInvoices { get; set; }
+
+        // Ngày tạo tài khoản khách hàng
+        [BsonElement("ngaytao")]
+        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 
     public class Account

@@ -89,5 +89,26 @@ namespace API_NoSQL.Services
             for (int d = 1; d <= days; d++) result.Add((d, totals[d - 1]));
             return result;
         }
+
+        public async Task<List<Customer>> GetCustomersByRangeAsync(DateTime? fromDate, DateTime? toDate)
+        {
+            // Lấy toàn bộ khách hàng
+            var customers = await _ctx.Customers
+                .Find(Builders<Customer>.Filter.Empty)
+                .ToListAsync();
+
+            // Lọc theo đơn hàng
+            var filtered = customers
+                .Where(c =>
+                    c.Orders != null &&
+                    c.Orders.Any(o =>
+                        (!fromDate.HasValue || o.CreatedAt >= fromDate.Value) &&
+                        (!toDate.HasValue || o.CreatedAt <= toDate.Value)
+                    )
+                )
+                .ToList();
+
+            return filtered;
+        }
     }
 }
