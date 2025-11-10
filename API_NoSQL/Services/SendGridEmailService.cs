@@ -25,7 +25,6 @@ public class SendGridEmailService : ISendGridEmailService
     {
         try
         {
-            // Validate required fields
             if (string.IsNullOrWhiteSpace(_settings.ApiKey))
             {
                 _logger.LogError("SendGrid API Key chưa được cấu hình");
@@ -57,7 +56,6 @@ public class SendGridEmailService : ISendGridEmailService
             msg.AddTo(to);
             msg.SetTemplateId(_settings.TemplateId);
 
-            // Chuẩn bị dữ liệu cho Dynamic Template
             var templateData = new
             {
                 customer_name = orderData.CustomerName,

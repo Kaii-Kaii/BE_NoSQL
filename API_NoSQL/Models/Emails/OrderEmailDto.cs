@@ -10,13 +10,11 @@ public class OrderItemDto
 
 public class OrderEmailDto
 {
-    // Thông tin khách hàng
     public string CustomerName { get; set; } = default!;
     public string CustomerEmail { get; set; } = default!;
     public string PhoneNumber { get; set; } = default!;
     public string ShippingAddress { get; set; } = default!;
 
-    // Thông tin đơn hàng
     public string OrderId { get; set; } = default!;
     public string OrderDate { get; set; } = default!;
     public List<OrderItemDto> Items { get; set; } = new();

@@ -45,12 +45,10 @@ namespace API_NoSQL.Models
         [BsonElement("nxb")]
         public Publisher? Publisher { get; set; }
 
-        // ✅ THÊM DANH SÁCH ĐÁNH GIÁ
         [BsonElement("danhgia")]
         [BsonIgnoreIfNull]
         public List<BookReview>? Reviews { get; set; }
 
-        // ✅ THÊM ĐIỂM TRUNG BÌNH
         [BsonElement("diemtrungbinh")]
         [BsonIgnoreIfDefault]
         public double AverageRating { get; set; }
@@ -77,7 +75,6 @@ namespace API_NoSQL.Models
         public string? Address { get; set; }
     }
 
-    // ✅ MODEL ĐÁNH GIÁ SÁCH
     public class BookReview
     {
         [BsonElement("madg")]
@@ -89,7 +86,7 @@ namespace API_NoSQL.Models
         [BsonElement("tennguoidanhgia")]
         public string ReviewerName { get; set; } = default!;
 
-        [BsonElement("avatar")]  // ✅ THÊM AVATAR
+        [BsonElement("avatar")]
         [BsonIgnoreIfNull]
         public string? AvatarUrl { get; set; }
 
@@ -110,8 +107,3 @@ namespace API_NoSQL.Models
         public DateTime? UpdatedAt { get; set; }
     }
 }
-
-// To fix CS0246, ensure the MongoDB.Driver NuGet package is installed in your project.
-// In Visual Studio, right-click your project > Manage NuGet Packages > Search for "MongoDB.Driver" and install it.
-// No code changes are needed in this file if the package is installed.
-// If you have already installed the package and still see the error, try rebuilding your solution.

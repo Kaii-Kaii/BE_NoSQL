@@ -15,7 +15,6 @@ namespace API_NoSQL.Controllers
             _firebaseAuth = firebaseAuth;
         }
 
-        // Email/Password login via Firebase
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] EmailLoginDto dto)
         {
@@ -33,7 +32,6 @@ namespace API_NoSQL.Controllers
             });
         }
 
-        // Email/Password registration via Firebase (auto sends verification email)
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] EmailRegisterDto dto)
         {
@@ -57,7 +55,6 @@ namespace API_NoSQL.Controllers
                 });
         }
 
-        // Request password reset email via Firebase
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] PasswordResetRequestDto dto)
         {
@@ -67,7 +64,6 @@ namespace API_NoSQL.Controllers
             return Ok(new { message = "Password reset email sent. Please check your inbox." });
         }
 
-        // Resend verification email
         [HttpPost("resend-verification")]
         public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationDto dto)
         {
@@ -77,7 +73,6 @@ namespace API_NoSQL.Controllers
             return Ok(new { message = "Verification email sent. Please check your inbox." });
         }
 
-        // Change password for logged-in user
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
         {

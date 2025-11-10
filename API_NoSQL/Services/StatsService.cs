@@ -35,7 +35,6 @@ namespace API_NoSQL.Services
             return total;
         }
 
-        // NEW: daily revenue for a month
         public async Task<List<(int Day, int Total)>> GetDailyRevenueAsync(int year, int month)
         {
             var start = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -52,7 +51,7 @@ namespace API_NoSQL.Services
             {
                 if (o.CreatedAt >= start && o.CreatedAt < end)
                 {
-                    var d = o.CreatedAt.ToLocalTime().Day; // 1..days
+                    var d = o.CreatedAt.ToLocalTime().Day;
                     totals[d - 1] += o.Total;
                 }
             }
@@ -62,7 +61,6 @@ namespace API_NoSQL.Services
             return result;
         }
 
-        // NEW: daily sold quantity for a month
         public async Task<List<(int Day, int Quantity)>> GetDailyBooksSoldAsync(int year, int month)
         {
             var start = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -92,12 +90,10 @@ namespace API_NoSQL.Services
 
         public async Task<List<Customer>> GetCustomersByRangeAsync(DateTime? fromDate, DateTime? toDate)
         {
-            // Lấy toàn bộ khách hàng
             var customers = await _ctx.Customers
                 .Find(Builders<Customer>.Filter.Empty)
                 .ToListAsync();
 
-            // Lọc theo đơn hàng
             var filtered = customers
                 .Where(c =>
                     c.Orders != null &&

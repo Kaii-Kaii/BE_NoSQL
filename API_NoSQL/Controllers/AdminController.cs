@@ -195,9 +195,6 @@ namespace API_NoSQL.Controllers
         }
 
         // POST /api/Admin/inventory/import
-        /// <summary>
-        /// Admin nhập hàng - tạo phiếu nhập và cập nhật tồn kho
-        /// </summary>
         [HttpPost("inventory/import")]
         public async Task<IActionResult> ImportInventory([FromBody] ImportInvoiceDto dto)
         {
@@ -221,9 +218,6 @@ namespace API_NoSQL.Controllers
         }
 
         // GET /api/Admin/inventory/imports
-        /// <summary>
-        /// Lấy danh sách phiếu nhập của admin đang đăng nhập
-        /// </summary>
         [HttpGet("inventory/imports")]
         public async Task<IActionResult> GetImportInvoices()
         {
@@ -236,9 +230,6 @@ namespace API_NoSQL.Controllers
         }
 
         // GET /api/Admin/inventory/imports/{code}
-        /// <summary>
-        /// Lấy chi tiết 1 phiếu nhập
-        /// </summary>
         [HttpGet("inventory/imports/{code}")]
         public async Task<IActionResult> GetImportInvoiceDetail(string code)
         {
@@ -254,9 +245,6 @@ namespace API_NoSQL.Controllers
         }
 
         // GET /api/Admin/inventory/imports/history?page=1&pageSize=20&fromDate=2025-01-01&toDate=2025-12-31
-        /// <summary>
-        /// Lấy lịch sử nhập hàng với phân pag và lọc theo ngày
-        /// </summary>
         [HttpGet("inventory/imports/history")]
         public async Task<IActionResult> GetImportHistory(
             [FromQuery] int page = 1, 
@@ -289,7 +277,6 @@ namespace API_NoSQL.Controllers
                 c.Email,
                 c.Phone,
                 c.Address,
-                // Lấy ngày lập đơn hàng mới nhất (ngaylap trong hoadon)
                 OrderDate = c.Orders != null && c.Orders.Any()
                     ? c.Orders.Max(o => o.CreatedAt.ToLocalTime())
                     : (DateTime?)null,
@@ -301,7 +288,7 @@ namespace API_NoSQL.Controllers
         }
     }
 
-    [BsonIgnoreExtraElements] // ← THÊM dòng này để bỏ qua trường không có trong model
+    [BsonIgnoreExtraElements]
     public class Order
     {
         [BsonElement("mahd")]

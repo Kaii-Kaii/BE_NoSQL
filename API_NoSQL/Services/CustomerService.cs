@@ -19,7 +19,6 @@ namespace API_NoSQL.Services
         public async Task CreateAsync(Customer c, string rawPassword)
         {
             c.Account.PasswordHash = BCrypt.Net.BCrypt.HashPassword(rawPassword);
-            // Ensure Avatar is null on create if not set
             c.Avatar = string.IsNullOrWhiteSpace(c.Avatar) ? null : c.Avatar;
             await _ctx.Customers.InsertOneAsync(c);
         }
@@ -30,7 +29,6 @@ namespace API_NoSQL.Services
             if (c is null) return false;
             update(c);
             var res = await _ctx.Customers.ReplaceOneAsync(x => x.Id == c.Id, c);
-            // Consider success if the document exists, even if no fields were modified
             return res.MatchedCount == 1;
         }
 
@@ -43,7 +41,6 @@ namespace API_NoSQL.Services
         public bool VerifyPassword(Customer c, string password) =>
             BCrypt.Net.BCrypt.Verify(password, c.Account.PasswordHash);
 
-        // NEW: đổi mật khẩu theo username
         public async Task<(bool Ok, string? Error)> ChangePasswordAsync(string username, string oldPassword, string newPassword)
         {
             var c = await GetByUsernameAsync(username);
@@ -59,28 +56,25 @@ namespace API_NoSQL.Services
             return res.ModifiedCount == 1 ? (true, null) : (false, "Password update failed");
         }
 
-        // NEW: set avatar url by code
         public async Task<bool> SetAvatarUrlByCodeAsync(string code, string avatarUrl)
         {
             var update = Builders<Customer>.Update.Set(c => c.Avatar, avatarUrl);
             var res = await _ctx.Customers.UpdateOneAsync(c => c.Code == code, update);
-            return res.MatchedCount == 1; // success if exists
+            return res.MatchedCount == 1;
         }
 
-        // NEW: set avatar url by username
         public async Task<bool> SetAvatarUrlByUsernameAsync(string username, string avatarUrl)
         {
             var update = Builders<Customer>.Update.Set(c => c.Avatar, avatarUrl);
             var res = await _ctx.Customers.UpdateOneAsync(c => c.Account.Username == username, update);
-            return res.MatchedCount == 1; // success if exists
+            return res.MatchedCount == 1;
         }
 
-        // NEW: remove avatar
         public async Task<bool> RemoveAvatarByCodeAsync(string code)
         {
             var update = Builders<Customer>.Update.Unset(c => c.Avatar);
             var res = await _ctx.Customers.UpdateOneAsync(c => c.Code == code, update);
-            return res.MatchedCount == 1; // success if exists
+            return res.MatchedCount == 1;
         }
     }
 }

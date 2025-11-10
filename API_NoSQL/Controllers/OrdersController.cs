@@ -34,7 +34,6 @@ namespace API_NoSQL.Controllers
             return o is null ? NotFound() : Ok(o);
         }
 
-        // NEW: Customer confirms order received -> "Hoàn thành"
         [HttpPut("{customerCode}/orders/{orderCode}/confirm")]
         public async Task<IActionResult> ConfirmReceived(string customerCode, string orderCode)
         {
@@ -43,7 +42,6 @@ namespace API_NoSQL.Controllers
             return NoContent();
         }
 
-        // NEW: Customer cancels order (only for "DaDatHang" status)
         [HttpPut("{customerCode}/orders/{orderCode}/cancel")]
         public async Task<IActionResult> CancelOrder(string customerCode, string orderCode, [FromBody] CancelOrderDto dto)
         {

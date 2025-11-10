@@ -34,12 +34,10 @@ namespace API_NoSQL.Models
         [BsonElement("hoadon")]
         public List<Order> Orders { get; set; } = [];
 
-        // Danh sách phiếu nhập hàng cho admin
         [BsonElement("phieunhap")]
         [BsonIgnoreIfNull]
         public List<ImportInvoice>? ImportInvoices { get; set; }
 
-        // Ngày tạo tài khoản khách hàng
         [BsonElement("ngaytao")]
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -60,7 +58,7 @@ namespace API_NoSQL.Models
         public string Status { get; set; } = "ChuaXacMinh";
     }
 
-    [BsonIgnoreExtraElements] // ← THÊM dòng này
+    [BsonIgnoreExtraElements]
     public class Order
     {
         [BsonElement("mahd")]
@@ -81,12 +79,10 @@ namespace API_NoSQL.Models
         [BsonElement("chitiet")]
         public List<OrderItem> Items { get; set; } = [];
 
-        // NEW: Thông tin huỷ đơn
         [BsonElement("lydohuy")]
         [BsonIgnoreIfNull]
         public string? CancelReason { get; set; }
 
-        // NEW: Thời gian hoàn thành HOẶC huỷ đơn (dùng chung)
         [BsonElement("thoigianhoanthanh")]
         [BsonIgnoreIfNull]
         public DateTime? CompletedAt { get; set; }
@@ -110,7 +106,6 @@ namespace API_NoSQL.Models
         public int LineTotal { get; set; }
     }
 
-    // Model cho phiếu nhập hàng
     public class ImportInvoice
     {
         [BsonElement("mapn")]

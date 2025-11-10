@@ -17,9 +17,6 @@ namespace API_NoSQL.Services
             _books = books;
         }
 
-        /// <summary>
-        /// Tạo đánh giá mới (lưu cả avatar vào review)
-        /// </summary>
         public async Task<(bool Ok, string? Error, BookReview? Review)> CreateReviewAsync(
             string customerCode, CreateReviewDto dto)
         {
@@ -52,13 +49,12 @@ namespace API_NoSQL.Services
                 if (dto.Rating < 1 || dto.Rating > 5)
                     return (false, "Rating must be between 1 and 5", null);
 
-                // ✅ Tạo review với avatar
                 var review = new BookReview
                 {
                     ReviewId = Guid.NewGuid().ToString("N"),
                     CustomerCode = customerCode,
                     ReviewerName = customer.FullName,
-                    AvatarUrl = customer.Avatar,  // ✅ LƯU AVATAR
+                    AvatarUrl = customer.Avatar,
                     OrderCode = dto.OrderCode,
                     Rating = dto.Rating,
                     Content = dto.Content,
@@ -79,9 +75,6 @@ namespace API_NoSQL.Services
             }
         }
 
-        /// <summary>
-        /// Cập nhật đánh giá
-        /// </summary>
         public async Task<(bool Ok, string? Error)> UpdateReviewAsync(
             string customerCode, string bookCode, string reviewId, UpdateReviewDto dto)
         {
@@ -131,9 +124,6 @@ namespace API_NoSQL.Services
             }
         }
 
-        /// <summary>
-        /// Xóa đánh giá
-        /// </summary>
         public async Task<(bool Ok, string? Error)> DeleteReviewAsync(
             string customerCode, string bookCode, string reviewId)
         {
@@ -168,19 +158,15 @@ namespace API_NoSQL.Services
             }
         }
 
-        /// <summary>
-        /// Lấy tất cả đánh giá - LẤY TÊN VÀ AVATAR MỚI NHẤT TỪ CUSTOMER
-        /// </summary>
+
         public async Task<List<ReviewResponseDto>> GetReviewsByBookAsync(string bookCode, string? currentCustomerCode = null)
         {
             var book = await _books.GetByCodeAsync(bookCode);
             if (book?.Reviews == null)
                 return new List<ReviewResponseDto>();
 
-            // ✅ Lấy tất cả customer codes
             var customerCodes = book.Reviews.Select(r => r.CustomerCode).Distinct().ToList();
 
-            // ✅ Lấy thông tin customer mới nhất
             var customers = await _ctx.Customers
                 .Find(c => customerCodes.Contains(c.Code))
                 .Project(c => new { c.Code, c.FullName, c.Avatar })
@@ -199,8 +185,8 @@ namespace API_NoSQL.Services
                     {
                         ReviewId = r.ReviewId,
                         CustomerCode = r.CustomerCode,
-                        ReviewerName = customer?.FullName ?? r.ReviewerName,  // ✅ TÊN MỚI NHẤT
-                        AvatarUrl = customer?.Avatar ?? r.AvatarUrl,          // ✅ AVATAR MỚI NHẤT
+                        ReviewerName = customer?.FullName ?? r.ReviewerName,
+                        AvatarUrl = customer?.Avatar ?? r.AvatarUrl,
                         OrderCode = r.OrderCode,
                         Rating = r.Rating,
                         Content = r.Content,
@@ -212,9 +198,6 @@ namespace API_NoSQL.Services
                 .ToList();
         }
 
-        /// <summary>
-        /// Cập nhật điểm trung bình
-        /// </summary>
         private async Task UpdateAverageRatingAsync(string bookCode)
         {
             var book = await _books.GetByCodeAsync(bookCode);
@@ -228,9 +211,6 @@ namespace API_NoSQL.Services
             await _ctx.Books.UpdateOneAsync(b => b.Code == bookCode, update);
         }
 
-        /// <summary>
-        /// Kiểm tra khách hàng đã mua và hoàn thành sách này chưa
-        /// </summary>
         public async Task<bool> CanReviewBookAsync(string customerCode, string bookCode)
         {
             var customer = await _customers.GetByCodeAsync(customerCode);
