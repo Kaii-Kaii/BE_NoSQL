@@ -74,7 +74,6 @@ namespace API_NoSQL.Services
 
         public async Task<bool> AdjustStockAndSoldAsync(string code, int qty)
         {
-            // Decrease stock, increase sold when purchasing
             var update = Builders<Book>.Update
                 .Inc(b => b.InStock, -qty)
                 .Inc(b => b.Sold, qty);
@@ -86,7 +85,6 @@ namespace API_NoSQL.Services
             return res.ModifiedCount == 1;
         }
 
-        // NEW: increase stock (import inventory)
         public async Task<bool> IncreaseStockAsync(string code, int qty)
         {
             if (qty <= 0) return false;
@@ -95,11 +93,9 @@ namespace API_NoSQL.Services
             return res.ModifiedCount == 1;
         }
 
-        // NEW: get all books (no paging/filter)
         public Task<List<Book>> GetAllAsync() =>
             _ctx.Books.Find(Builders<Book>.Filter.Empty).ToListAsync();
 
-        // NEW: top sold books
         public Task<List<Book>> GetTopSoldAsync(int limit) =>
             _ctx.Books.Find(Builders<Book>.Filter.Empty)
                 .Sort(Builders<Book>.Sort.Descending(b => b.Sold))
@@ -143,7 +139,6 @@ namespace API_NoSQL.Services
             )).ToList();
         }
 
-        // NEW: Get all distinct book categories
         public async Task<List<BookCategory>> GetAllCategoriesAsync()
         {
             var pipeline = new[]
@@ -176,7 +171,6 @@ namespace API_NoSQL.Services
             }).ToList();
         }
 
-        // NEW: Get all distinct publishers
         public async Task<List<Publisher>> GetAllPublishersAsync()
         {
             var pipeline = new[]
@@ -212,11 +206,10 @@ namespace API_NoSQL.Services
             }).ToList();
         }
 
-        // NEW: Generate unique book code (format: SPDDMMYYhhss)
         public string GenerateBookCode()
         {
             var now = DateTime.Now;
-            return $"SP{now:ddMMyyHHmmss}"; // SP291025143025 (29/10/25 14:30:25)
+            return $"SP{now:ddMMyyHHmmss}";
         }
     }
 }

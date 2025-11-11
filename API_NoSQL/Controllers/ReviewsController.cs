@@ -16,9 +16,6 @@ namespace API_NoSQL.Controllers
         }
 
         // POST /api/Reviews
-        /// <summary>
-        /// Tạo đánh giá mới (yêu cầu X-Customer-Code header)
-        /// </summary>
         [HttpPost]
         public async Task<IActionResult> CreateReview([FromBody] CreateReviewDto dto)
         {
@@ -35,9 +32,6 @@ namespace API_NoSQL.Controllers
         }
 
         // PUT /api/Reviews/{bookCode}/{reviewId}
-        /// <summary>
-        /// Cập nhật đánh giá (chỉ người tạo)
-        /// </summary>
         [HttpPut("{bookCode}/{reviewId}")]
         public async Task<IActionResult> UpdateReview(
             string bookCode, 
@@ -57,9 +51,6 @@ namespace API_NoSQL.Controllers
         }
 
         // DELETE /api/Reviews/{bookCode}/{reviewId}
-        /// <summary>
-        /// Xóa đánh giá (chỉ người tạo)
-        /// </summary>
         [HttpDelete("{bookCode}/{reviewId}")]
         public async Task<IActionResult> DeleteReview(string bookCode, string reviewId)
         {
@@ -75,10 +66,7 @@ namespace API_NoSQL.Controllers
             return NoContent();
         }
 
-        // GET /api/Reviews/{bookCode}
-        /// <summary>
-        /// Lấy tất cả đánh giá của 1 sách (public, ai cũng xem được)
-        /// </summary>
+        // GET /api/Reviews/{bookCode}>
         [HttpGet("{bookCode}")]
         public async Task<IActionResult> GetReviews(string bookCode)
         {
@@ -90,9 +78,6 @@ namespace API_NoSQL.Controllers
         }
 
         // GET /api/Reviews/{bookCode}/can-review
-        /// <summary>
-        /// Kiểm tra customer có thể đánh giá sách này không
-        /// </summary>
         [HttpGet("{bookCode}/can-review")]
         public async Task<IActionResult> CanReview(string bookCode)
         {

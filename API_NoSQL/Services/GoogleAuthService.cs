@@ -35,7 +35,6 @@ namespace API_NoSQL.Services
         {
             if (_initialized) return;
 
-            // ✅ Check xem đã có FirebaseApp chưa
             if (FirebaseApp.DefaultInstance != null)
             {
                 _initialized = true;
@@ -116,7 +115,7 @@ namespace API_NoSQL.Services
                         {
                             Username = email,
                             Role = "khachhang",
-                            Status = "DaXacMinh" // ← Google users đã xác minh
+                            Status = "DaXacMinh"
                         },
                         Orders = new List<Order>()
                     };

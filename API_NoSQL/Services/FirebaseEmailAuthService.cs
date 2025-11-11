@@ -42,7 +42,6 @@ namespace API_NoSQL.Services
         {
             if (_initialized) return;
 
-            // ✅ Check FirebaseApp
             if (FirebaseApp.DefaultInstance != null)
             {
                 _initialized = true;
@@ -85,23 +84,19 @@ namespace API_NoSQL.Services
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        // Register user in Firebase (email/password), send verify email using Firebase, create Customer doc.
         public async Task<(bool Ok, string? Error, Customer? Customer)> RegisterAsync(EmailRegisterDto dto)
         {
             try
             {
-                // 1) Kiểm tra email đã tồn tại trong MongoDB
                 var existing = await _customers.GetByUsernameAsync(dto.Email);
                 if (existing is not null)
                     return (false, "Email already registered", null);
 
-                // ✅ Check FirebaseApp
                 if (FirebaseApp.DefaultInstance == null)
                 {
                     EnsureFirebase();
                 }
 
-                // 2) Tạo user trên Firebase và LẤY idToken
                 var signUpPayload = new
                 {
                     email = dto.Email,
@@ -121,7 +116,6 @@ namespace API_NoSQL.Services
                     return (false, err, null);
                 }
 
-                // 3) Lấy idToken và GỬI EMAIL XÁC THỰC
                 var idToken = signUpJson.GetProperty("idToken").GetString();
                 if (!string.IsNullOrWhiteSpace(idToken))
                 {
@@ -132,7 +126,6 @@ namespace API_NoSQL.Services
                     }, JsonOptions);
                 }
 
-                // 4) Tạo Customer trong MongoDB
                 static string NewCustomerCode() => $"KH{DateTime.UtcNow:yyyyMMddHHmmssfff}";
                 var customer = new Customer
                 {
@@ -162,7 +155,6 @@ namespace API_NoSQL.Services
             }
         }
 
-        // Login via Firebase (email/password), require verified email, upsert customer record.
         public async Task<(bool Ok, string? Error, Customer? Customer)> LoginAsync(EmailLoginDto dto)
         {
             try
@@ -218,15 +210,12 @@ namespace API_NoSQL.Services
                         },
                         Orders = new List<Order>()
                     };
-                    await _customers.CreateAsync(user, dto.Password); // Lưu password thật
+                    await _customers.CreateAsync(user, dto.Password);
                 }
                 else
                 {
-                    // ✅ ĐỒNG BỘ password mới từ Firebase sang MongoDB
-                    // Kiểm tra xem password hiện tại có khớp với MongoDB không
                     if (!_customers.VerifyPassword(user, dto.Password))
                     {
-                        // Password khác → User đã reset qua Firebase → Cập nhật MongoDB
                         var newHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
                         await _customers.UpdateAsync(user.Code, c =>
                         {
@@ -234,7 +223,6 @@ namespace API_NoSQL.Services
                         });
                     }
 
-                    // Cập nhật trạng thái nếu chưa xác minh
                     if (user.Account.Status == "ChuaXacMinh" && emailVerified)
                     {
                         await _customers.UpdateAsync(user.Code, c => c.Account.Status = "DaXacMinh");
@@ -255,7 +243,6 @@ namespace API_NoSQL.Services
             }
         }
 
-        // Ask Firebase to send verification mail to the currently signed-in user
         public async Task<bool> SendVerificationEmailAsync(string idToken)
         {
             var resp = await _http.PostAsJsonAsync(Endpoint("accounts:sendOobCode"), new
@@ -264,9 +251,9 @@ namespace API_NoSQL.Services
                 idToken
             }, JsonOptions);
             return resp.IsSuccessStatusCode;
+
         }
 
-        // Ask Firebase to send password reset email
         public async Task<bool> SendPasswordResetEmailAsync(string email)
         {
             var resp = await _http.PostAsJsonAsync(Endpoint("accounts:sendOobCode"), new
@@ -277,7 +264,6 @@ namespace API_NoSQL.Services
             return resp.IsSuccessStatusCode;
         }
 
-        // Ask Firebase to send verification to new email and handle change on confirm
         public async Task<(bool Ok, string? Error)> StartChangeEmailAsync(string customerCode, string idToken, string newEmail)
         {
             try
@@ -309,7 +295,7 @@ namespace API_NoSQL.Services
                 {
                     c.Email = newEmail;
                     c.Account.Username = newEmail;
-                    c.Account.Status = "ChuaXacMinh"; // ← Đặt lại trạng thái khi đổi email
+                    c.Account.Status = "ChuaXacMinh";
                 });
 
                 if (!updated)
@@ -337,15 +323,10 @@ namespace API_NoSQL.Services
             }
         }
 
-        /// <summary>
-        /// Change password for logged-in user
-        /// Updates both Firebase and MongoDB
-        /// </summary>
         public async Task<(bool Ok, string? Error)> ChangePasswordAsync(ChangePasswordDto dto)
         {
             try
             {
-                // 1) Verify current password
                 var signInPayload = new
                 {
                     email = dto.Email,
@@ -364,7 +345,6 @@ namespace API_NoSQL.Services
                 if (string.IsNullOrWhiteSpace(idToken))
                     return (false, "Failed to verify current password");
 
-                // 2) Change password on Firebase
                 var changePasswordPayload = new
                 {
                     idToken = idToken,
@@ -383,7 +363,6 @@ namespace API_NoSQL.Services
                     return (false, err);
                 }
 
-                // 3) Update MongoDB
                 var user = await _customers.GetByUsernameAsync(dto.Email);
                 if (user != null)
                 {

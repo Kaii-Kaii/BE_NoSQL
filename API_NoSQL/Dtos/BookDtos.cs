@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http;
 namespace API_NoSQL.Dtos
 {
     public record BookCreateDto(
-        string? Code, // ← Thay đổi thành nullable
+        string? Code,
         string Name,
         string Author,
         int PublishYear,
@@ -28,7 +28,6 @@ namespace API_NoSQL.Dtos
         BookCategory? Category,
         Publisher? Publisher);
 
-    // NEW: Admin create book via form-data with image upload
     public class AdminBookCreateFormDto
     {
         public string Code { get; set; } = default!;
@@ -44,7 +43,6 @@ namespace API_NoSQL.Dtos
         public IFormFile? Cover { get; set; }
     }
 
-    // NEW: Admin update book via form-data with optional image upload
     public class AdminBookUpdateFormDto
     {
         public string? Name { get; set; }

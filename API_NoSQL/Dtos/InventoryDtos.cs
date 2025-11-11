@@ -2,7 +2,6 @@
 {
     public record StockInDto(int Quantity);
 
-    // DTO cho nhập hàng
     public class ImportInvoiceDto
     {
         public List<ImportItemDto> Items { get; set; } = [];
@@ -13,6 +12,6 @@
     {
         public string BookCode { get; set; } = default!;
         public int Quantity { get; set; }
-        public int UnitPrice { get; set; }  // ← THÊM GIÁ NHẬP
+        public int UnitPrice { get; set; }
     }
 }

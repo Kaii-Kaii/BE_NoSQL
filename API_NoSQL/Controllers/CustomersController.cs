@@ -62,7 +62,6 @@ namespace API_NoSQL.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Update(string code, [FromForm] CustomerUpdateDto dto)
         {
-            // Basic field updates; ignore empty strings from Swagger
             var updated = await _service.UpdateAsync(code, c =>
             {
                 if (!string.IsNullOrWhiteSpace(dto.FullName)) c.FullName = dto.FullName!;
@@ -73,7 +72,6 @@ namespace API_NoSQL.Controllers
 
             if (!updated) return NotFound();
 
-            // Avatar handling
             if (dto.Avatar is not null && dto.Avatar.Length > 0)
             {
                 var url = await _cloudinary.UploadImageAsync(dto.Avatar);
@@ -94,7 +92,6 @@ namespace API_NoSQL.Controllers
             return ok ? NoContent() : NotFound();
         }
 
-        // NEW: Upload avatar and save URL (still available if you need a dedicated endpoint)
         [HttpPost("{code}/avatar")]
         public async Task<IActionResult> UploadAvatar(string code, IFormFile file)
         {
@@ -111,10 +108,9 @@ namespace API_NoSQL.Controllers
         }
     }
 
-    // NEW: Admin create book via form-data with image upload
     public class AdminBookCreateFormDto
     {
-        public string? Code { get; set; } // ← ĐỔI THÀNH NULLABLE
+        public string? Code { get; set; }
         public string Name { get; set; } = default!;
         public string Author { get; set; } = default!;
         public int PublishYear { get; set; }

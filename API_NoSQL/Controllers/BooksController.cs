@@ -30,7 +30,6 @@ namespace API_NoSQL.Controllers
             return Ok(new { total, page, pageSize, items });
         }
 
-        // NEW: return all books (no paging)
         [HttpGet("all")]
         public async Task<IActionResult> GetAll()
         {
@@ -38,7 +37,6 @@ namespace API_NoSQL.Controllers
             return Ok(items);
         }
 
-        // NEW: Get all categories
         [HttpGet("categories")]
         public async Task<IActionResult> GetCategories()
         {
@@ -46,7 +44,6 @@ namespace API_NoSQL.Controllers
             return Ok(categories);
         }
 
-        // NEW: Get all publishers
         [HttpGet("publishers")]
         public async Task<IActionResult> GetPublishers()
         {
@@ -69,7 +66,7 @@ namespace API_NoSQL.Controllers
                 ? _service.GenerateBookCode() 
                 : dto.Code;
 
-            // Kiểm tra mã đã tồn tại (trong cả 2 trường hợp)
+            // Kiểm tra mã đã tồn tại
             var existing = await _service.GetByCodeAsync(bookCode);
             if (existing is not null) 
                 return Conflict(new { error = $"Mã sách {bookCode} đã tồn tại" });

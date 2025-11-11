@@ -16,8 +16,7 @@ namespace API_NoSQL.Services
             if (!_customers.VerifyPassword(user, dto.Password))
                 return (false, "Invalid credentials", null);
 
-            // In a real system, issue a JWT. Here we just return the user basic info.
-            user.Account.PasswordHash = string.Empty; // do not leak hash
+            user.Account.PasswordHash = string.Empty;
             return (true, null, user);
         }
     }

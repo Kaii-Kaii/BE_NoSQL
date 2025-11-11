@@ -1,6 +1,6 @@
 ﻿using API_NoSQL.Dtos;
 using API_NoSQL.Models;
-using API_NoSQL.Models.Emails;  // ← THÊM DÒNG NÀY
+using API_NoSQL.Models.Emails;
 using MongoDB.Driver;
 using System.Net;
 using System.Net.Mail;
@@ -27,7 +27,6 @@ namespace API_NoSQL.Services
         private static string NewOrderCode() =>
             $"HD{DateTime.UtcNow:yyyyMMddHHmmssfff}";
 
-        // NEW: Normalize payment method (remove accents)
         private static string NormalizePaymentMethod(string method)
         {
             return method?.ToLower().Trim() switch
@@ -46,7 +45,6 @@ namespace API_NoSQL.Services
             if (customer is null) return (false, "Customer not found", null);
             if (req.Items is null || req.Items.Count == 0) return (false, "Order has no items", null);
 
-            // Normalize and validate payment method
             var normalizedPaymentMethod = NormalizePaymentMethod(req.PaymentMethod);
             var validPaymentMethods = new[] { "TienMat", "ChuyenKhoan" };
             if (!validPaymentMethods.Contains(normalizedPaymentMethod))
@@ -92,7 +90,6 @@ namespace API_NoSQL.Services
             customer.Orders.Add(order);
             await _customers.UpdateAsync(customer.Code, c => c.Orders = customer.Orders);
 
-            // Gửi email xác nhận (lấy info từ customer có sẵn)
             var orderEmailData = new OrderEmailDto
             {
                 CustomerName = customer.FullName,
@@ -140,7 +137,6 @@ namespace API_NoSQL.Services
             return null;
         }
 
-        // NEW: admin - list all orders (flattened)
         public async Task<(IReadOnlyList<AdminOrderListItemDto> Items, int Total)> GetAllOrdersAsync(int page, int pageSize)
         {
             var customers = await _ctx.Customers
@@ -160,10 +156,8 @@ namespace API_NoSQL.Services
             return (items, total);
         }
 
-        // NEW: Admin updates order status
         public async Task<bool> UpdateOrderStatusAsync(string customerCode, string orderCode, string newStatus)
         {
-            // Accept only normalized statuses without accents - THÊM "DaHuy"
             var validStatuses = new[] { "DaDatHang", "DangGiao", "HoanThanh", "DaHuy" };
             if (!validStatuses.Contains(newStatus))
                 return false;
@@ -178,7 +172,6 @@ namespace API_NoSQL.Services
             return await _customers.UpdateAsync(customerCode, c => c.Orders = customer.Orders);
         }
 
-        // NEW: Customer confirms order received -> "HoanThanh"
         public async Task<bool> ConfirmOrderReceivedAsync(string customerCode, string orderCode)
         {
             var customer = await _customers.GetByCodeAsync(customerCode);
@@ -187,19 +180,16 @@ namespace API_NoSQL.Services
             var order = customer.Orders.FirstOrDefault(o => o.Code == orderCode);
             if (order is null) return false;
 
-            // Only allow confirmation if status is "DangGiao"
             if (order.Status != "DangGiao")
                 return false;
 
             order.Status = "HoanThanh";
-            order.CompletedAt = DateTime.UtcNow; // Lưu thời gian hoàn thành
+            order.CompletedAt = DateTime.UtcNow;
             return await _customers.UpdateAsync(customerCode, c => c.Orders = customer.Orders);
         }
 
-        // NEW: Customer cancels order (only allowed for "DaDatHang" status)
         public async Task<(bool Ok, string? Error)> CancelOrderAsync(string customerCode, string orderCode, string reason)
         {
-            // Validate reason
             if (string.IsNullOrWhiteSpace(reason))
                 return (false, "Vui lòng nhập lý do huỷ đơn hàng");
 
@@ -211,7 +201,6 @@ namespace API_NoSQL.Services
             if (order is null) 
                 return (false, "Không tìm thấy đơn hàng");
 
-            // Only allow cancellation if status is "DaDatHang"
             if (order.Status != "DaDatHang")
             {
                 if (order.Status == "DangGiao")
@@ -224,17 +213,14 @@ namespace API_NoSQL.Services
                 return (false, $"Không thể huỷ đơn hàng có trạng thái '{order.Status}'");
             }
 
-            // Restore stock when order is cancelled
             foreach (var item in order.Items)
             {
-                // Reverse the stock adjustment (add back quantity, subtract from sold)
                 await _books.AdjustStockAndSoldAsync(item.BookCode, -item.Quantity);
             }
 
-            // Update order status to cancelled with reason
             order.Status = "DaHuy";
             order.CancelReason = reason;
-            order.CompletedAt = DateTime.UtcNow; // Dùng chung trường này cho thời gian huỷ
+            order.CompletedAt = DateTime.UtcNow;
             
             var success = await _customers.UpdateAsync(customerCode, c => c.Orders = customer.Orders);
             
